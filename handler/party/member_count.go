@@ -1,9 +1,9 @@
 package party
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
 )
 
 func SendMemberCountResponse(requestingPlayerUniqueId uint32, memberCount byte) {

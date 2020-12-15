@@ -1,7 +1,7 @@
 package stall
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
+	"github.com/ferdoran/go-sro-framework/server"
 )
 
 const (

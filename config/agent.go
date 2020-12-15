@@ -2,8 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/ferdoran/go-sro-framework/config"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/config"
 	"os"
 )
 

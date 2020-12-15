@@ -1,9 +1,9 @@
 package party
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
+	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
 )
 
 func SendPartyCreatedFromMatchingResponse(party model.Party, joinedPlayer uint32) {
@@ -63,7 +63,7 @@ func SendPartyCreatedFromMatchingResponse(party model.Party, joinedPlayer uint32
 	p1.WriteUInt32(290)
 	p1.WriteUInt32(0)
 	partyMaster.Session.Conn.Write(p1.ToBytes())
-	
+
 	// Send out another package containing the new user
 	newPartyMember := model.GetSroWorldInstance().PlayersByUniqueId[joinedPlayer]
 	p2 := network.EmptyPacket()

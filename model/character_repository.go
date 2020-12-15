@@ -1,8 +1,8 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-framework/db"
 	log "github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/db"
 	"time"
 )
 

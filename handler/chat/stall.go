@@ -1,9 +1,9 @@
 package chat
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
 )
 
 func handleStallMessage(request MessageRequest, session *server.Session) {

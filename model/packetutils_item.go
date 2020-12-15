@@ -1,8 +1,8 @@
 package model
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/utils"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/utils"
 	"time"
 )
 

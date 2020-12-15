@@ -1,9 +1,9 @@
 package character
 
 import (
+	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
 )
 
 type GameReadyHandler struct{}

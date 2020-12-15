@@ -1,6 +1,6 @@
 package model
 
-import "gitlab.ferdoran.de/game-dev/go-sro/framework/db"
+import "github.com/ferdoran/go-sro-framework/db"
 
 const (
 	InsertItem = "INSERT INTO `SRO_SHARD`.`ITEM` (FK_REF_ITEM, VARIANCE) VALUES (?, ?);"

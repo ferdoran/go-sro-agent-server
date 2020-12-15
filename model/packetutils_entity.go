@@ -1,9 +1,9 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
 )
 
 func WriteEntitySpawnData(p *network.Packet, object ISRObject) {

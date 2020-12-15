@@ -1,11 +1,11 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-agent-server/engine/geo/math"
+	"github.com/ferdoran/go-sro-fileutils/navmesh"
+	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/engine/geo/math"
-	"gitlab.ferdoran.de/game-dev/go-sro/fileutils/navmesh"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/utils"
 	"sync"
 )
 

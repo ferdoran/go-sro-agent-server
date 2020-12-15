@@ -1,13 +1,13 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-agent-server/engine/geo"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/engine/geo"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/utils"
 	"sync"
 	"time"
 )

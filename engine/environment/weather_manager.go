@@ -1,6 +1,6 @@
 package environment
 
-import "gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
+import "github.com/ferdoran/go-sro-agent-server/model"
 
 type WeatherManager struct{}
 

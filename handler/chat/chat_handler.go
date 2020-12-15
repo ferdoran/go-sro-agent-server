@@ -1,9 +1,9 @@
 package chat
 
 import (
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
 )
 
 const (

@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/config"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/config"
+	"github.com/ferdoran/go-sro-agent-server/model"
 	"sync"
 	"time"
 )

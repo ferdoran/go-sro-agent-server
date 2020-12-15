@@ -1,9 +1,9 @@
 package stall
 
 import (
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
 	log "github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
 )
 
 type StallUpdateHandler struct {

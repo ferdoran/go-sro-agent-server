@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/model"
 	"sync"
 	"time"
 )

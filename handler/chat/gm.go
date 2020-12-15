@@ -2,11 +2,11 @@ package chat
 
 import (
 	"fmt"
+	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
 	"regexp"
 	"strconv"
 	"sync"

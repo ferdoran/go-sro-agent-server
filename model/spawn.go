@@ -1,6 +1,6 @@
 package model
 
-import "gitlab.ferdoran.de/game-dev/go-sro/framework/db"
+import "github.com/ferdoran/go-sro-framework/db"
 
 type Spawn struct {
 	Position       Position

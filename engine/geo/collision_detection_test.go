@@ -1,9 +1,9 @@
 package geo
 
 import (
+	"github.com/ferdoran/go-sro-fileutils/navmesh"
+	"github.com/ferdoran/go-sro-framework/math"
 	"github.com/g3n/engine/math32"
-	"gitlab.ferdoran.de/game-dev/go-sro/fileutils/navmesh"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/math"
 	"reflect"
 	"testing"
 )

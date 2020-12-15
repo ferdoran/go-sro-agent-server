@@ -1,15 +1,15 @@
 package chat
 
 import (
-	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
+	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/network"
+	"github.com/ferdoran/go-sro-framework/network/opcode"
+	"github.com/ferdoran/go-sro-framework/server"
 )
 
 func handleGlobalMessage(request MessageRequest, session *server.Session) {
 	// TODO: Remove global from players inventory
-	
+
 	players := model.GetSroWorldInstance().PlayersByUniqueId
 	for _, v := range players {
 		p := network.EmptyPacket()

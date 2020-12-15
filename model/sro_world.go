@@ -2,9 +2,9 @@ package model
 
 import (
 	"fmt"
+	"github.com/ferdoran/go-sro-fileutils/navmesh"
+	"github.com/ferdoran/go-sro-framework/utils"
 	log "github.com/sirupsen/logrus"
-	"gitlab.ferdoran.de/game-dev/go-sro/fileutils/navmesh"
-	"gitlab.ferdoran.de/game-dev/go-sro/framework/utils"
 	"strings"
 	"sync"
 )
