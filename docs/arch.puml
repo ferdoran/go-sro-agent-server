@@ -1,0 +1,40 @@
+@startuml
+
+package "Agent Server" {
+    [Network]
+    [Inventory Handler]
+    [Movement Handler]
+    [Guild Handler]
+    [World]
+
+
+    [Network] <-up-> [Inventory Handler]: Packet
+    [Network] <-up-> [Movement Handler]: Packet
+    [Network] <-up-> [Guild Handler]: Packet
+    [Network] <-up-> [Environment Handler]: Packet
+    [Network] <-up-> [Skill Handler]: Packet
+
+    [World] -down- [Inventory Handler]: manipulate
+    [World] -down- [Movement Handler]: manipulate
+    [World] -down- [Guild Handler]: manipulate
+    [World] -down- [Environment Handler]: manipulate
+    [World] -down- [Skill Handler]: manipulate
+}
+
+package Clients {
+    [Client1]
+    [Client2]
+    [Client3]
+    [Client4]
+    [Client5]
+    [Client6]
+}
+
+[Client1] -up- [Network]
+[Client2] -up- [Network]
+[Client3] -up- [Network]
+[Client4] -up- [Network]
+[Client5] -up- [Network]
+[Client6] -up- [Network]
+
+@enduml

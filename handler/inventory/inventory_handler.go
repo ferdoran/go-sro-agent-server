@@ -1,0 +1,135 @@
+package inventory
+
+import (
+	"github.com/sirupsen/logrus"
+	"gitlab.ferdoran.de/game-dev/go-sro/agent-server/model"
+	"gitlab.ferdoran.de/game-dev/go-sro/framework/network"
+	"gitlab.ferdoran.de/game-dev/go-sro/framework/network/opcode"
+	"gitlab.ferdoran.de/game-dev/go-sro/framework/server"
+)
+
+type InventoryHandler struct{}
+
+type ItemInventoryOperation byte
+
+const (
+	MoveItemOperation ItemInventoryOperation = iota
+	_
+	PutItemIntoStorageOperation
+	TakeItemFromStorageOperation
+	PutItemIntoExchangeWindowOperation
+	TakeItemFromExchangeWindowOperation // 5
+	_
+	DropItemOperation
+	BuyItemOperation
+	SellItemOperation
+	DropGoldOperation // 10
+	_
+	_
+	_
+	_
+	_ // 15
+	_
+	_
+	BuyItemFromMallOperation
+	BuySpecialtyGoodsOperation
+	SellSpecialtyGoodsOperation // 20
+	_
+	_
+	EquipAvatarItemOperation
+	UnequipAvatarItemOperation
+	_ // 25
+	PutItemIntoPetInventoryOperation
+	TakeItemFromPetInventoryOperation
+)
+
+func NewInventoryHandler() server.PacketHandler {
+	handler := InventoryHandler{}
+	server.PacketManagerInstance.RegisterHandler(opcode.ItemOperationRequest, handler)
+	return handler
+}
+
+func (h InventoryHandler) Handle(data server.PacketChannelData) {
+
+	operationType, err := data.ReadByte()
+	if err != nil {
+		// FIXME not necessarily a fail but after a successful exchange a 0x7034 packet without payload is sent for each item that has been traded
+		logrus.Errorf("failed to read inventory operation type\n")
+	}
+
+	switch ItemInventoryOperation(operationType) {
+	case MoveItemOperation:
+		moveItem(data)
+	case DropGoldOperation:
+		dropGold(data)
+	}
+}
+
+func dropGold(data server.PacketChannelData) {
+	goldAmount, err := data.ReadUInt64()
+
+	if err != nil {
+		logrus.Errorf("failed to read gold amount")
+	}
+
+	logrus.Infof("Player [%s] is dropping %d gold\n", data.UserContext.CharName, goldAmount)
+}
+
+func moveItem(data server.PacketChannelData) {
+	sourceSlot, err := data.ReadByte()
+	if err != nil {
+		logrus.Errorf("failed to read source slot\n")
+	}
+
+	targetSlot, err := data.ReadByte()
+	if err != nil {
+		logrus.Errorf("failed to read target slot\n")
+	}
+
+	amount, err := data.ReadUInt16()
+	if err != nil {
+		logrus.Errorf("failed to read unknown value\n")
+	}
+
+	if sourceSlot == targetSlot {
+		return
+	}
+
+	world := model.GetSroWorldInstance()
+	player := world.PlayersByCharName[data.Session.UserContext.CharName]
+	if player == nil {
+		// player not online
+		logrus.Tracef("Player %s is not online\n", player.CharName)
+		return
+	}
+
+	movedItems, moveAction := player.Inventory.MoveItems(sourceSlot, targetSlot, player)
+
+	if !movedItems {
+		logrus.Tracef("Failed to move items %v %v\n", movedItems, moveAction)
+		return
+	}
+
+	switch moveAction {
+	case model.EquipItem:
+		// Send equip item packet
+		player.SendEquipItemPacket(player.Inventory.Items[targetSlot], targetSlot)
+		player.SendStatsUpdate()
+	case model.UnequipItem:
+		// Send unequip item packet
+		player.SendUnequipItemPacket(player.Inventory.Items[targetSlot], sourceSlot)
+		player.SendStatsUpdate()
+	}
+
+	p := network.EmptyPacket()
+	p.MessageID = opcode.ItemOperationResponse
+	p.WriteBool(true) // result
+	p.WriteByte(byte(MoveItemOperation))
+	p.WriteByte(sourceSlot)
+	p.WriteByte(targetSlot)
+	p.WriteUInt16(amount)
+	p.WriteByte(0) // TODO find out what this value stands for
+
+	data.Conn.Write(p.ToBytes())
+
+}
