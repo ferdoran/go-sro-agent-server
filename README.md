@@ -77,5 +77,5 @@ If you have any more questions, feel free to contact me.
 
 ## Licensing
 
-go-sro-framework is licensed under the DON'T BE A DICK PUBLIC LICENSE.
+go-sro-agent-server is licensed under the DON'T BE A DICK PUBLIC LICENSE.
 See [LICENSE](LICENSE) for the full license text
