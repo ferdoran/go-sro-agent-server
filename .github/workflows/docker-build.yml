@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - develop
 
 jobs:
   build-and-publish:
@@ -25,7 +24,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ${GITHUB_REPOSITORY}:${GITHUB_REF}
+          tags: ferdoran/go-sro-agent-server:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
 
