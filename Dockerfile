@@ -7,6 +7,6 @@ RUN GOOS=linux CGO_ENABLED=0 go build -o main .
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+WORKDIR /etc/go-sro-agent-server
 COPY --from=builder /app/main .
-CMD ["./main"]
+CMD ["etc/go-sro-agent-server/main"]
