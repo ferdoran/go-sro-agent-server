@@ -1,1 +1,0 @@
-[36mINFO[0m[2021-03-03 19:16:34.925] loading config: config.json                  
