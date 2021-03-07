@@ -21,7 +21,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            name/app
+            ferdoran/go-sro-agent-server
           # add git short SHA as Docker tag
           tag-sha: true
       - name: Set up QEMU
