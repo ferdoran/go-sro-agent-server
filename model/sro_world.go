@@ -5,6 +5,7 @@ import (
 	"github.com/ferdoran/go-sro-fileutils/navmesh"
 	"github.com/ferdoran/go-sro-framework/utils"
 	log "github.com/sirupsen/logrus"
+	"os"
 	"strings"
 	"sync"
 )
@@ -106,23 +107,31 @@ func (w *SroWorld) InitiallySpawnAllNpcs() {
 }
 
 func (w *SroWorld) LoadGameServerRegions(gameServerId int) map[int16]*Region {
+	log.Info("loading game server regions")
 	gsRegions := GetRegionsForGameServer(gameServerId)
 	w.Loader.LoadNavMeshInfos()
-	w.Loader.LoadPrecomputedNavmeshDataFromGOB(w.NavmeshGobPath)
-	//w.Loader.LoadNavMeshData()
-	//w.Loader.SaveNavmeshDataAsGOB(w.NavmeshGobPath)
-	//w.Loader.SaveNavmeshDataAsJSON()
+
+	_, err := os.Stat(w.NavmeshGobPath)
+
+	if os.IsNotExist(err) {
+		log.Infof("prelinked navdata file does not exist. loading from data then")
+		w.Loader.LoadNavMeshData()
+	} else {
+		log.Infof("loading prelinked navdata file")
+		w.Loader.LoadPrecomputedNavmeshDataFromGOB(w.NavmeshGobPath)
+	}
+
 	for _, region := range gsRegions {
 		w.AddRegions(region.ContinentName, region.Regions...)
 		w.LoadSpawnDataForContinent(region.ContinentName)
 	}
 	GetSroWorldInstance().Regions = w.Regions
-
+	log.Info("finished loading game server regions")
 	return w.Regions
 }
 
 func (w *SroWorld) AddRegions(continent string, regions ...int16) {
-	utils.PrintSection("Loading regions for " + continent)
+	log.Debugf("loading regions for %s", continent)
 	numRegions := len(regions)
 	dungeonsCounter := 0
 	for i, reg := range regions {
@@ -141,7 +150,7 @@ func (w *SroWorld) AddRegions(continent string, regions ...int16) {
 		w.Regions[reg] = &region
 	}
 
-	log.Debugln("Linking global edges")
+	log.Debugln("linking global edges")
 	for _, reg := range w.Regions {
 		reg.LinkGlobalEdges(w.Regions)
 		reg.CalculateObjectMatrices()

@@ -17,3 +17,4 @@
 go-sro.exe
 logs.txt
 config.json
+*.log

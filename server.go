@@ -18,24 +18,26 @@ import (
 	"github.com/ferdoran/go-sro-framework/server"
 	gwHandlers "github.com/ferdoran/go-sro-gateway-server/handler"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"net"
 	"os"
 )
 
 type AgentServer struct {
 	*server.Server
-	Config                  config.AgentConfig
 	failedLogins            map[string]int
 	GatewaySession          *server.Session
 	Tokens                  map[string]lobby.LoginTokenData
 	UnhandledPacketsLogger  *log.Logger
 	CreateLoginTokenHandler *lobby.CreateLoginTokenHandler
+	backendModules          map[string]string
 	//SpawnEngine             *spawn.SpawnEngine
 }
 
-func NewAgentServer(config config.AgentConfig) AgentServer {
+func NewAgentServer() AgentServer {
 	server := server.NewEngine(
-		config.AgentServer.IP,
-		config.AgentServer.Port,
+		net.ParseIP(viper.GetString(config.AgentIp)),
+		viper.GetInt(config.AgentPort),
 		network.EncodingOptions{
 			None:         false,
 			Disabled:     false,
@@ -44,17 +46,19 @@ func NewAgentServer(config config.AgentConfig) AgentServer {
 			KeyExchange:  true,
 			KeyChallenge: false,
 		},
-		config.Config,
 	)
 
-	server.ModuleID = config.AgentServer.ModuleID
+	server.ModuleID = viper.GetString(config.AgentModuleId)
+	backendModules := make(map[string]string)
+	backendModules[viper.GetString(config.GatewayModuleId)] = viper.GetString(config.GatewaySecret)
+
 	return AgentServer{
 		Server:                 &server,
-		Config:                 config,
 		failedLogins:           make(map[string]int),
 		Tokens:                 make(map[string]lobby.LoginTokenData),
 		UnhandledPacketsLogger: logging.UnhandledPacketLogger(),
 		//SpawnEngine:            spawn.GetSpawnEngineInstance(),
+		backendModules: backendModules,
 	}
 }
 
@@ -64,7 +68,7 @@ func (a *AgentServer) Start() {
 }
 
 func (a *AgentServer) handlePackets() {
-
+	server.NewBackendConnectionHandler(a.BackendConnection, a.backendModules)
 	gwHandlers.NewPatchRequestHandler()
 	gwHandlers.NewShardlistRequestHandler()
 	lobby.NewAuthRequestHandler(a.Tokens)
@@ -147,19 +151,20 @@ func (a *AgentServer) handleGatewayPackets(data server.PacketChannelData) {
 
 func (a *AgentServer) serverModuleConnected(data server.BackendConnectionData) {
 	switch data.ModuleID {
-	case a.Config.GatewayServer.ModuleID:
+	case viper.GetString(config.GatewayModuleId):
 		a.GatewaySession = data.Session
 		a.Server.Sessions[data.Session.ID] = nil
 	}
 }
 
 func main() {
+	config.Initialize()
 	logging.Init()
 	reader := bufio.NewReader(os.Stdin)
 
-	config.LoadConfig("config.json")
-	log.Println("Starting server...")
-	gw := NewAgentServer(config.GlobalConfig)
+	//config.LoadConfig("config.json")
+	log.Println("starting agent server...")
+	agentServer := NewAgentServer()
 
 	for k, v := range model.RefItems {
 		model.RefObjects[k] = v.RefObject
@@ -168,7 +173,7 @@ func main() {
 		model.RefObjects[k] = v.RefObject
 	}
 
-	world := model.InitSroWorldInstance(config.GlobalConfig.AgentServer.DataPath, config.GlobalConfig.AgentServer.NavmeshGOB)
+	world := model.InitSroWorldInstance(viper.GetString(config.AgentDataPath), viper.GetString(config.AgentPrelinkedNavdataFile))
 	world.LoadGameServerRegions(1)
 
 	model.RefItems = model.GetAllRefItems()
@@ -184,7 +189,7 @@ func main() {
 
 	model.GetSroWorldInstance().InitiallySpawnAllNpcs()
 
-	gw.Start()
+	agentServer.Start()
 	log.Println("Press Enter to exit...")
 	reader.ReadString('\n')
 }
