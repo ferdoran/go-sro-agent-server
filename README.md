@@ -1,5 +1,10 @@
 # go-sro-agent-server
 
+![go-version](https://img.shields.io/github/go-mod/go-version/ferdoran/go-sro-agent-server)
+![version](https://img.shields.io/github/v/tag/ferdoran/go-sro-agent-server?label=version)
+![build-status](https://img.shields.io/github/workflow/status/ferdoran/go-sro-agent-server/Build%20and%20Publish%20Docker%20Image)
+![last-commit](https://img.shields.io/github/last-commit/ferdoran/go-sro-agent-server)
+
 An agent server implementation of the game Silkroad Online ,
 based on [go-sro-framework](https://github.com/ferdoran/go-sro-framework) 
 and [go-sro-fileutils](https://github.com/ferdoran/go-sro-fileutils),
@@ -7,6 +12,15 @@ written in Golang.
 
 It was developed using vSRO 1.88 files.
 Using different versions might result in errors and bugs.
+
+## Config
+> Environment variable values are prioritized over config file values
+
+Configuration can be done by config file or env variables.
+There is some default configuration which you can check here:
+
+- [`go-sro-framework/config/config.go`](https://github.com/ferdoran/go-sro-framework/tree/master/config/config.go)
+- [`config/agent.go`](https://github.com/ferdoran/go-sro-agent-server/tree/master/config/agent.go)
 
 ## Features
 
