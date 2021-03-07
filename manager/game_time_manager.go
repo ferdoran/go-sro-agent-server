@@ -3,6 +3,7 @@ package manager
 import (
 	"github.com/ferdoran/go-sro-agent-server/config"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/spf13/viper"
 	"sync"
 	"time"
 )
@@ -23,7 +24,7 @@ func GetGameTimeManagerInstance() *GameTimeManager {
 		}
 		gameTimeManagerInstance.Name = "GameTimeManager"
 		gameTimeManagerInstance.initialDelay = time.Second
-		gameTimeManagerInstance.rate = time.Second / time.Duration(config.GlobalConfig.GameTimeConfig.TicksPerSecond)
+		gameTimeManagerInstance.rate = time.Second / time.Duration(viper.GetInt(config.GameTimeTicksPerSecond))
 		gameTimeManagerInstance.runnerFunc = gameTimeManagerInstance.moveObjects
 	})
 	return gameTimeManagerInstance

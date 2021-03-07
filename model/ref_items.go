@@ -2,7 +2,6 @@ package model
 
 import (
 	"github.com/ferdoran/go-sro-framework/db"
-	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -132,7 +131,7 @@ func GetAllRefItems() map[uint32]RefItem {
 	}
 	queryHandle.Close()
 
-	logrus.Infoln("loading ref items from database")
+	logrus.Infof("loading %d ref items from database", refItemCount)
 
 	queryHandle, err = dbConn.Query(SelectAllRefItems)
 	db.CheckError(err)
@@ -302,7 +301,6 @@ func GetAllRefItems() map[uint32]RefItem {
 			&refItem.MaxMagicOptCount,
 			&refItem.ChildItemCount,
 		)
-		utils.PrintProgress(counter, refItemCount)
 		counter++
 		refItems[refItem.ID] = refItem
 	}
