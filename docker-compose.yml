@@ -54,7 +54,7 @@ services:
       DB_ACCOUNT_HOST: db
       DB_SHARD_HOST: db
       AGENT_HOST: agent-server
-      AGENT_PUBLIC_IP: "10.211.55.2"
+      AGENT_PUBLIC_IP: "127.0.0.1"
       GATEWAY_HOST: gateway-server
 
 networks:
