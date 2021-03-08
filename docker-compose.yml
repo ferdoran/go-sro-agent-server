@@ -1,9 +1,18 @@
-version: "2.4"
+version: "3"
 services:
   db:
     image: ferdoran/go-sro-db:latest
     restart: always
     container_name: gosro-db
+    networks:
+      - gosro
+    ports:
+      - "3306:3306"
+      - "33060:33060"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_USER: sro
@@ -13,11 +22,22 @@ services:
     image: ferdoran/go-sro-agent-server:latest
     restart: always
     container_name: gosro-agent-server
+    networks:
+      - gosro
     depends_on:
       - db
+    ports:
+      - "15882:15882"
+    deploy:
+      resources:
+        limits:
+          memory: 4G
     environment:
-      DB_ACCOUNT_HOST: gosro-db
-      DB_SHARD_HOST: gosro-db
+      DB_ACCOUNT_HOST: db
+      DB_SHARD_HOST: db
+      AGENT_HOST: agent-server
+    volumes:
+    - /Users/rmueller1/dev/workspaces/private/sro/Data:/etc/go-sro-agent-server/Data
 
   gateway-server:
     image: ferdoran/go-sro-gateway-server:latest
@@ -26,7 +46,15 @@ services:
     depends_on:
       - db
       - agent-server
+    ports:
+      - "15779:15779"
+    networks:
+      - gosro
     environment:
-      DB_ACCOUNT_HOST: gosro-db
-      DB_SHARD_HOST: gosro-db
-      AGENT_HOST: gosro-agent-server
+      DB_ACCOUNT_HOST: db
+      DB_SHARD_HOST: db
+      AGENT_HOST: agent-server
+      GATEWAY_HOST: gateway-server
+
+networks:
+  gosro:

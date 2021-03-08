@@ -19,7 +19,6 @@ import (
 	gwHandlers "github.com/ferdoran/go-sro-gateway-server/handler"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"net"
 	"os"
 )
 
@@ -36,7 +35,7 @@ type AgentServer struct {
 
 func NewAgentServer() AgentServer {
 	server := server.NewEngine(
-		net.ParseIP(viper.GetString(config.AgentIp)),
+		viper.GetString(config.AgentHost),
 		viper.GetInt(config.AgentPort),
 		network.EncodingOptions{
 			None:         false,
