@@ -1,0 +1,32 @@
+version: "2.4"
+services:
+  db:
+    image: ferdoran/go-sro-db:latest
+    restart: always
+    container_name: gosro-db
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_USER: sro
+      MYSQL_PASSWORD: 1234
+
+  agent-server:
+    image: ferdoran/go-sro-agent-server:latest
+    restart: always
+    container_name: gosro-agent-server
+    depends_on:
+      - db
+    environment:
+      DB_ACCOUNT_HOST: gosro-db
+      DB_SHARD_HOST: gosro-db
+
+  gateway-server:
+    image: ferdoran/go-sro-gateway-server:latest
+    restart: always
+    container_name: gosro-gateway-server
+    depends_on:
+      - db
+      - agent-server
+    environment:
+      DB_ACCOUNT_HOST: gosro-db
+      DB_SHARD_HOST: gosro-db
+      AGENT_HOST: gosro-agent-server

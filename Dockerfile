@@ -9,4 +9,6 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /etc/go-sro-agent-server
 COPY --from=builder /app/main .
-CMD ["etc/go-sro-agent-server/main"]
+
+EXPOSE 15882
+CMD ["./main"]
