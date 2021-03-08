@@ -37,7 +37,7 @@ services:
       DB_SHARD_HOST: db
       AGENT_HOST: agent-server
     volumes:
-    - /Users/rmueller1/dev/workspaces/private/sro/Data:/etc/go-sro-agent-server/Data
+    - /path/to/data/folder:/etc/go-sro-agent-server/Data
 
   gateway-server:
     image: ferdoran/go-sro-gateway-server:latest
@@ -54,6 +54,7 @@ services:
       DB_ACCOUNT_HOST: db
       DB_SHARD_HOST: db
       AGENT_HOST: agent-server
+      AGENT_PUBLIC_IP: "10.211.55.2"
       GATEWAY_HOST: gateway-server
 
 networks:
