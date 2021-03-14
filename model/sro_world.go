@@ -109,12 +109,12 @@ func (w *SroWorld) InitiallySpawnAllNpcs() {
 func (w *SroWorld) LoadGameServerRegions(gameServerId int) map[int16]*Region {
 	log.Info("loading game server regions")
 	gsRegions := GetRegionsForGameServer(gameServerId)
-	w.Loader.LoadNavMeshInfos()
 
 	_, err := os.Stat(w.NavmeshGobPath)
 
 	if os.IsNotExist(err) {
 		log.Infof("prelinked navdata file does not exist. loading from data then")
+		w.Loader.LoadNavMeshInfos()
 		w.Loader.LoadNavMeshData()
 	} else {
 		log.Infof("loading prelinked navdata file")
