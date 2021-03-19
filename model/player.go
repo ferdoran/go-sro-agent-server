@@ -94,7 +94,6 @@ type Player struct {
 	LifeState
 	BodyState
 	CharKnownObjectList *CharKnownObjectList
-	MovementData        *MovementData
 	Session             *server.Session
 	Mutex               sync.Mutex
 	Scale               byte
@@ -341,7 +340,7 @@ func (p *Player) UpdatePosition() bool {
 
 	newPos := NewPosFromWorldCoordinates(nextPosVec.X, nextPosVec.Z)
 
-	if p.MovementData.HasDestination && curPos.DistanceToSquared(newPos) > curPos.DistanceToSquared(p.MovementData.TargetPosition) {
+	if p.MovementData.HasDestination && curPos.DistanceToSquared(newPos) >= curPos.DistanceToSquared(p.MovementData.TargetPosition) {
 		newPos = p.MovementData.TargetPosition
 		nextPosIsTarget = true
 	}
@@ -368,6 +367,7 @@ func (p *Player) UpdatePosition() bool {
 		newPos.Region.Objects)
 	if hasCollision {
 		p.StopMovement()
+		p.SendPositionUpdate()
 		return true
 	}
 
@@ -497,6 +497,10 @@ func (p *Player) GetScale() byte {
 
 func (p *Player) GetPVPCape() PVPCape {
 	return p.PVPCape
+}
+
+func (p *Player) GetType() string {
+	return "Player"
 }
 
 func (p *Player) GetMovementData() *MovementData {

@@ -33,7 +33,11 @@ func (p Position) ToWorldCoordinates() (float32, float32, float32) {
 	}
 
 	regionId := utils.XAndZToInt16(byte(rX), byte(rZ))
-	region := sroWorldInstance.Regions[regionId]
+	region, err := sroWorldInstance.GetRegion(regionId)
+
+	if err != nil {
+		logrus.Panic(err)
+	}
 
 	p.Region = region
 	x := (float32(rX) * 1920.0) + p.X
@@ -75,7 +79,7 @@ func NewPosFromWorldCoordinates(x, z float32) Position {
 	regionZ := byte(z / RegionHeight)
 
 	regionId := utils.XAndZToInt16(regionX, regionZ)
-	region := sroWorldInstance.Regions[regionId]
+	region, _ := sroWorldInstance.GetRegion(regionId)
 	pX := x - float32(regionX)*float32(RegionWidth)
 	pZ := z - float32(regionZ)*float32(RegionHeight)
 	pY := region.GetYAtOffset(pX, pZ)

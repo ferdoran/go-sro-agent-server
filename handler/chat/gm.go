@@ -134,13 +134,19 @@ func warpPlayer(playerUniqueId uint32, x, y, z float32, regionId int16) {
 	world := model.GetSroWorldInstance()
 	player := world.PlayersByUniqueId[playerUniqueId]
 
+	region, err := world.GetRegion(regionId)
+
+	if err != nil {
+		logrus.Panic(err)
+	}
 	newPosition := model.Position{
 		X:       x,
 		Y:       y,
 		Z:       z,
 		Heading: 0,
-		Region:  world.Regions[regionId],
+		Region:  region,
 	}
+	player.StopMovement()
 	player.SetPosition(newPosition)
 	player.SendPositionUpdate()
 }

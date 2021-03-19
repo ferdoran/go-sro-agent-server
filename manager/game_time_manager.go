@@ -31,11 +31,14 @@ func GetGameTimeManagerInstance() *GameTimeManager {
 }
 
 func (gtm *GameTimeManager) moveObjects() {
+	world := model.GetSroWorldInstance()
 	for gtm.started {
-		world := model.GetSroWorldInstance()
-		for _, obj := range world.GetMovingObjects() {
-			if obj.UpdatePosition() {
-				world.RemoveMovingObject(obj.GetUniqueID())
+		select {
+		case <-gtm.ticker.C:
+			for _, obj := range world.GetMovingObjects() {
+				if obj.UpdatePosition() {
+					world.RemoveMovingObject(obj.GetUniqueID())
+				}
 			}
 		}
 	}

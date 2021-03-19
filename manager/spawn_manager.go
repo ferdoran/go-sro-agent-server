@@ -28,10 +28,11 @@ func GetSpawnManagerInstance() *SpawnManager {
 }
 
 func (s *SpawnManager) updateSpawns() {
+	world := model.GetSroWorldInstance()
 	for s.started {
 		select {
 		case <-s.ticker.C:
-			for _, region := range model.GetSroWorldInstance().Regions {
+			for _, region := range world.GetRegions() {
 				for _, object := range region.VisibleObjects {
 
 					if player, isPlayer := object.(model.IPlayer); isPlayer {

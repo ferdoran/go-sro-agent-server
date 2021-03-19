@@ -32,10 +32,11 @@ func GetKnownListManager() *KnownListManager {
 }
 
 func (k *KnownListManager) updateKnownLists() {
+	world := model.GetSroWorldInstance()
 	for k.started {
 		select {
 		case <-k.ticker.C:
-			for _, region := range model.GetSroWorldInstance().Regions {
+			for _, region := range world.GetRegions() {
 				for _, object := range region.VisibleObjects {
 
 					knownObjects := region.GetKnownObjectsAroundObject(object)

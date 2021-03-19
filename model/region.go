@@ -221,7 +221,7 @@ func (r *Region) GetNeighbourRegions() []*Region {
 
 	for x1 := x - 1; x1 <= x+1; x1++ {
 		for z1 := z - 1; z1 <= z+1; z1++ {
-			if reg := world.Regions[utils.XAndZToInt16(byte(x), byte(z))]; reg != nil {
+			if reg, _ := world.GetRegion(utils.XAndZToInt16(byte(x1), byte(z1))); reg != nil {
 				regions = append(regions, reg)
 			}
 		}
@@ -238,7 +238,7 @@ func (r *Region) GetKnownObjectsAroundObject(object ISRObject) map[uint32]ISRObj
 				continue
 			}
 
-			if object.GetPosition().DistanceTo(otherObject.GetPosition()) <= 1000 {
+			if object.GetPosition().DistanceTo(otherObject.GetPosition()) <= 500 {
 				// TODO What about stealth / invisible characters?
 				knownObjects[otherObject.GetUniqueID()] = otherObject
 			}

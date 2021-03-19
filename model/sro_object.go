@@ -19,6 +19,7 @@ type ISRObject interface {
 type SRObject struct {
 	Position
 	TypeInfo
+	MovementData    *MovementData
 	KnownObjectList IKnownObjectList
 	UniqueID        uint32
 	RefObjectID     uint32

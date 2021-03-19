@@ -246,12 +246,18 @@ func (h *CharSelectionJoinRequestHandler) LoadPlayerData(charName string, sessio
 	player.HwanSpeed = 100
 	player.RefObjectID = uint32(char.RefObjID)
 	player.UniqueID = 0
+
+	region, err := world.GetRegion(char.Region)
+
+	if err != nil {
+		log.Panic(err)
+	}
 	player.Position = model.Position{
 		X:       char.PosX,
 		Y:       char.PosY,
 		Z:       char.PosZ,
 		Heading: float32(angle),
-		Region:  world.Regions[char.Region],
+		Region:  region,
 	}
 	player.Name = player.CharName
 	player.TypeInfo = model.RefChars[player.GetRefObjectID()].TypeInfo
@@ -316,62 +322,4 @@ func WriteMasteryOrSkill(p *network.Packet, masteryId uint32, masteryLvl byte) {
 	p.WriteByte(1)
 	p.WriteUInt32(masteryId)
 	p.WriteByte(masteryLvl)
-}
-
-func SpawnPlayers(p *model.Player) {
-	w := model.GetSroWorldInstance()
-	playersInRange := make([]*model.Player, 0)
-	//monstersInRange := make([]*ISRObject, 0)
-	for uId, player := range w.PlayersByUniqueId {
-		if uId == p.UniqueID {
-			continue
-		}
-
-		if player.Position.DistanceTo(p.Position) <= 1000 {
-			// in range
-			playersInRange = append(playersInRange, player)
-		}
-	}
-
-	// TODO check if players are out of view distance and despawn them
-
-	// GroupSpawnData
-	packet := network.EmptyPacket()
-	packet.MessageID = opcode.EntityGroupSpawnData
-
-	for _, player := range playersInRange {
-		log.Tracef("Spawning player [%s] to [%s]\n", p.CharName, player.CharName)
-		p1 := network.EmptyPacket()
-		p1.MessageID = opcode.EntityGroupSpawnBegin
-		p1.WriteByte(1)
-		p1.WriteUInt16(1)
-		player.Session.Conn.Write(p1.ToBytes())
-
-		p2 := network.EmptyPacket()
-		p2.MessageID = opcode.EntityGroupSpawnData
-		model.WriteEntitySpawn(&p2, p)
-		player.Session.Conn.Write(p2.ToBytes())
-
-		p3 := network.EmptyPacket()
-		p3.MessageID = opcode.EntityGroupSpawnEnd
-		player.Session.Conn.Write(p3.ToBytes())
-
-		model.WriteEntitySpawn(&packet, player)
-	}
-
-	if len(playersInRange) > 0 {
-		log.Tracef("Spawning %d players to [%s]\n", len(playersInRange), p.CharName)
-		p1 := network.EmptyPacket()
-		p1.MessageID = opcode.EntityGroupSpawnBegin
-		p1.WriteByte(1) // Group Spawn Type | 1 = Spawn | 2 = Despawn
-		p1.WriteUInt16(uint16(len(playersInRange)))
-
-		p.Session.Conn.Write(p1.ToBytes())
-		p.Session.Conn.Write(packet.ToBytes())
-
-		p2 := network.EmptyPacket()
-		p2.MessageID = opcode.EntityGroupSpawnEnd
-
-		p.Session.Conn.Write(p2.ToBytes())
-	}
 }

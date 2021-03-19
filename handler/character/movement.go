@@ -45,12 +45,18 @@ func (mh MovementHandler) Handle(data server.PacketChannelData) {
 			logrus.Panicf("failed to read z")
 		}
 
+		region, err := world.GetRegion(regionId)
+
+		if err != nil {
+			logrus.Panic(err)
+		}
+
 		targetPos := model.Position{
 			X:       float32(x),
 			Y:       float32(y),
 			Z:       float32(z),
 			Heading: 0,
-			Region:  world.Regions[regionId],
+			Region:  region,
 		}
 
 		//spawnEngine := spawn.GetSpawnEngineInstance()
@@ -183,7 +189,7 @@ func (mh MovementHandler) Handle(data server.PacketChannelData) {
 //						Y:       objPos.Y,
 //						Z:       objPos.Z,
 //						Heading: heading,
-//						Region:  world.Regions[newCell.RegionID],
+//						Region:  world.regions[newCell.RegionID],
 //					}) {
 //						newPos.Y = objPos.Y
 //						logrus.Tracef("Changing position to obj position: %v", newPos)

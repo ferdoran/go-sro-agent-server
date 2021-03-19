@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ferdoran/go-sro-fileutils/navmesh"
 	"github.com/ferdoran/go-sro-framework/utils"
@@ -16,7 +17,7 @@ type SroWorld struct {
 	PlayersByCharName map[string]*Player
 	NPCsByUniqueId    map[uint32]*NPC
 	Pets              map[uint32]*ISRObject // TODO Move to own type+
-	Regions           map[int16]*Region
+	regions           map[int16]*Region
 	MovingObjects     map[uint32]ICharacter
 	uniqueIdCounter   uint32
 	mutex             *sync.Mutex
@@ -37,7 +38,7 @@ func InitSroWorldInstance(dataPath, navmeshGobPath string) *SroWorld {
 			MovingObjects:     make(map[uint32]ICharacter),
 			uniqueIdCounter:   100_000,
 			mutex:             &sync.Mutex{},
-			Regions:           make(map[int16]*Region),
+			regions:           make(map[int16]*Region),
 			Loader:            navmesh.NewLoader(dataPath),
 			NavmeshGobPath:    navmeshGobPath,
 		}
@@ -72,7 +73,7 @@ func (w *SroWorld) PlayerDisconnected(uid uint32, charName string) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 
-	for _, reg := range w.Regions {
+	for _, reg := range w.regions {
 		for _, obj := range reg.VisibleObjects {
 			obj.GetKnownObjectList().RemoveObject(w.PlayersByCharName[charName])
 		}
@@ -86,7 +87,7 @@ func (w *SroWorld) PlayerDisconnected(uid uint32, charName string) {
 func (w *SroWorld) InitiallySpawnAllNpcs() {
 	// TODO
 	log.Info("spawning NPCs")
-	for _, region := range w.Regions {
+	for _, region := range w.regions {
 		for _, spawn := range region.Spawns {
 			if strings.Contains(spawn.NpcCodeName, "FORTRESS") {
 				continue
@@ -125,9 +126,9 @@ func (w *SroWorld) LoadGameServerRegions(gameServerId int) map[int16]*Region {
 		w.AddRegions(region.ContinentName, region.Regions...)
 		w.LoadSpawnDataForContinent(region.ContinentName)
 	}
-	GetSroWorldInstance().Regions = w.Regions
+	GetSroWorldInstance().regions = w.regions
 	log.Info("finished loading game server regions")
-	return w.Regions
+	return w.regions
 }
 
 func (w *SroWorld) AddRegions(continent string, regions ...int16) {
@@ -147,12 +148,12 @@ func (w *SroWorld) AddRegions(continent string, regions ...int16) {
 		navMeshData := w.Loader.NavMeshData[fileName]
 		region := NewRegionFromNavMeshData(reg, navMeshData)
 		region.LinkInternalEdges()
-		w.Regions[reg] = &region
+		w.regions[reg] = &region
 	}
 
 	log.Debugln("linking global edges")
-	for _, reg := range w.Regions {
-		reg.LinkGlobalEdges(w.Regions)
+	for _, reg := range w.regions {
+		reg.LinkGlobalEdges(w.regions)
 		reg.CalculateObjectMatrices()
 
 	}
@@ -161,10 +162,26 @@ func (w *SroWorld) AddRegions(continent string, regions ...int16) {
 	log.Infof("Finished loading regions for %s\n", continent)
 }
 
+func (w *SroWorld) GetRegion(regionId int16) (*Region, error) {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+
+	if reg, exists := w.regions[regionId]; exists {
+		return reg, nil
+	}
+	return nil, errors.New("region does not exist: " + string(regionId))
+}
+
+func (w *SroWorld) GetRegions() map[int16]*Region {
+	w.mutex.Lock()
+	defer w.mutex.Unlock()
+	return w.regions
+}
+
 func (w *SroWorld) LoadSpawnDataForContinent(continent string) {
 	spawns := GetSpawnsForContinent(continent)
 	for _, spawn := range spawns {
-		reg := w.Regions[spawn.RegionID]
+		reg := w.regions[spawn.RegionID]
 		if reg == nil {
 			log.Debugf("found spawn for non-existent region: %d", spawn.RegionID)
 			continue
