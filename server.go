@@ -12,6 +12,7 @@ import (
 	"github.com/ferdoran/go-sro-agent-server/handler/stall"
 	"github.com/ferdoran/go-sro-agent-server/manager"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-framework/boot"
 	"github.com/ferdoran/go-sro-framework/logging"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
@@ -34,7 +35,7 @@ type AgentServer struct {
 }
 
 func NewAgentServer() AgentServer {
-	server := server.NewEngine(
+	serv := server.NewEngine(
 		viper.GetString(config.AgentHost),
 		viper.GetInt(config.AgentPort),
 		network.EncodingOptions{
@@ -47,49 +48,51 @@ func NewAgentServer() AgentServer {
 		},
 	)
 
-	server.ModuleID = viper.GetString(config.AgentModuleId)
+	serv.ModuleID = viper.GetString(config.AgentModuleId)
 	backendModules := make(map[string]string)
 	backendModules[viper.GetString(config.GatewayModuleId)] = viper.GetString(config.GatewaySecret)
-
-	return AgentServer{
-		Server:                 &server,
+	agentServer := AgentServer{
+		Server:                 &serv,
 		failedLogins:           make(map[string]int),
 		Tokens:                 make(map[string]lobby.LoginTokenData),
 		UnhandledPacketsLogger: logging.UnhandledPacketLogger(),
-		//SpawnEngine:            spawn.GetSpawnEngineInstance(),
-		backendModules: backendModules,
+		backendModules:         backendModules,
 	}
+
+	server.InitBackendConnectionHandler(agentServer.BackendConnection, agentServer.backendModules)
+	lobby.InitAuthRequestHandler(agentServer.Tokens)
+	boot.RegisterComponent("packethandler", gwHandlers.InitPatchRequestHandler, 2)
+	boot.RegisterComponent("packethandler", gwHandlers.InitShardlistRequestHandler, 2)
+	boot.RegisterComponent("packethandler", lobby.InitCharSelectionJoinRequestHandler, 2)
+	boot.RegisterComponent("packethandler", lobby.InitCharSelectionActionRequestHandler, 2)
+	boot.RegisterComponent("packethandler", lobby.InitCharSelectionRenameRequestHandler, 2)
+	boot.RegisterComponent("packethandler", character.InitGuideHandler, 2)
+	boot.RegisterComponent("packethandler", character.InitMovementHandler, 2)
+	boot.RegisterComponent("packethandler", chat.InitChatHandler, 2)
+	boot.RegisterComponent("packethandler", logout.InitLogoutHandler, 2)
+	boot.RegisterComponent("packethandler", stall.InitStallCreateHandler, 2)
+	boot.RegisterComponent("packethandler", stall.InitStallDestroyHandler, 2)
+	boot.RegisterComponent("packethandler", stall.InitStallLeaveHandler, 2)
+	boot.RegisterComponent("packethandler", stall.InitStallUpdateHandler, 2)
+	boot.RegisterComponent("packethandler", inventory.InitInventoryHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingFormHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingUpdateHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingDeleteHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingListHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingJoinRequestHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyMatchingPlayerJoinRequestHandler, 2)
+	boot.RegisterComponent("packethandler", party.InitPartyKickHandler, 2)
+
+	return agentServer
 }
 
 func (a *AgentServer) Start() {
 	go a.Server.Start()
+
 	a.handlePackets()
 }
 
 func (a *AgentServer) handlePackets() {
-	server.NewBackendConnectionHandler(a.BackendConnection, a.backendModules)
-	gwHandlers.NewPatchRequestHandler()
-	gwHandlers.NewShardlistRequestHandler()
-	lobby.NewAuthRequestHandler(a.Tokens)
-	lobby.NewCharSelectionJoinRequestHandler()
-	lobby.NewCharSelectionActionRequestHandler()
-	lobby.NewCharSelectionRenameRequestHandler()
-	character.NewGuideHandler()
-	character.NewMovementHandler()
-	chat.NewChatHandler()
-	logout.NewLogoutHandler()
-	stall.NewStallCreateHandler()
-	stall.NewStallDestroyHandler()
-	stall.NewStallLeaveHandler()
-	stall.NewStallUpdateHandler()
-	inventory.NewInventoryHandler()
-	party.NewPartyMatchingFormHandler()
-	party.NewPartyMatchingUpdateHandler()
-	party.NewPartyMatchingDeleteHandler()
-	party.NewPartyMatchingListHandler()
-	party.NewPartyMatchingJoinRequestHandler()
-	party.NewPartyMatchingPlayerJoinRequestHandler()
-	party.NewPartyKickHandler()
 
 	for {
 		select {
@@ -159,36 +162,50 @@ func (a *AgentServer) serverModuleConnected(data server.BackendConnectionData) {
 func main() {
 	config.Initialize()
 	logging.Init()
+	boot.SetPhases("gamedata", "services", "network", "packethandler")
 	reader := bufio.NewReader(os.Stdin)
 
-	//config.LoadConfig("config.json")
+	loadGameData := func() {
+		for k, v := range model.RefItems {
+			model.RefObjects[k] = v.RefObject
+		}
+		for k, v := range model.RefChars {
+			model.RefObjects[k] = v.RefObject
+		}
+		model.RefItems = model.GetAllRefItems()
+		model.RefChars = model.GetAllRefChars()
+	}
+
+	boot.RegisterComponent("gamedata", loadGameData, 1)
+
+	setupWorld := func() {
+		world := model.InitSroWorldInstance(viper.GetString(config.AgentDataPath), viper.GetString(config.AgentPrelinkedNavdataFile))
+		world.LoadGameServerRegions(1)
+	}
+
+	boot.RegisterComponent("gamedata", setupWorld, 1)
+
+	startServices := func() {
+		manager.GetGameTimeManagerInstance().Start()
+		klm := manager.GetKnownListManager()
+		klm.Start()
+		sm := manager.GetSpawnManagerInstance()
+		sm.Start()
+		model.GetSroWorldInstance().InitiallySpawnAllNpcs()
+	}
+
+	boot.RegisterComponent("services", startServices, 1)
+
 	log.Println("starting agent server...")
-	agentServer := NewAgentServer()
 
-	for k, v := range model.RefItems {
-		model.RefObjects[k] = v.RefObject
-	}
-	for k, v := range model.RefChars {
-		model.RefObjects[k] = v.RefObject
+	startAgentServer := func() {
+		agentServer := NewAgentServer()
+		agentServer.Start()
 	}
 
-	world := model.InitSroWorldInstance(viper.GetString(config.AgentDataPath), viper.GetString(config.AgentPrelinkedNavdataFile))
-	world.LoadGameServerRegions(1)
+	boot.RegisterComponent("network", startAgentServer, 1)
+	boot.Boot()
 
-	model.RefItems = model.GetAllRefItems()
-	model.RefChars = model.GetAllRefChars()
-
-	manager.GetGameTimeManagerInstance().Start()
-
-	klm := manager.GetKnownListManager()
-	klm.Start()
-
-	sm := manager.GetSpawnManagerInstance()
-	sm.Start()
-
-	model.GetSroWorldInstance().InitiallySpawnAllNpcs()
-
-	agentServer.Start()
 	log.Println("Press Enter to exit...")
 	reader.ReadString('\n')
 }

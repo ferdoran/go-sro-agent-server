@@ -10,90 +10,94 @@ import (
 )
 
 type MovementHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewMovementHandler() server.PacketHandler {
-	handler := MovementHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.EntityMovementRequest, handler)
-	return handler
+func InitMovementHandler() {
+	queue := server.PacketManagerInstance.GetQueue(opcode.EntityMovementRequest)
+	handler := MovementHandler{channel: queue}
+	go handler.Handle()
 }
 
-func (mh MovementHandler) Handle(data server.PacketChannelData) {
-	hasDestination, err := data.ReadBool()
-	if err != nil {
-		logrus.Panicf("failed to read movement type")
-	}
-
-	world := model.GetSroWorldInstance()
-	player := world.PlayersByUniqueId[data.UserContext.UniqueID]
-
-	if hasDestination {
-		regionId, err := data.ReadInt16()
+func (mh *MovementHandler) Handle() {
+	for {
+		data := <-mh.channel
+		hasDestination, err := data.ReadBool()
 		if err != nil {
-			logrus.Panicf("failed to read regionId")
-		}
-		x, err := data.ReadInt16()
-		if err != nil {
-			logrus.Panicf("failed to read x")
-		}
-		y, err := data.ReadInt16()
-		if err != nil {
-			logrus.Panicf("failed to read y")
-		}
-		z, err := data.ReadInt16()
-		if err != nil {
-			logrus.Panicf("failed to read z")
+			logrus.Panicf("failed to read movement type")
 		}
 
-		region, err := world.GetRegion(regionId)
+		world := model.GetSroWorldInstance()
+		player := world.PlayersByUniqueId[data.UserContext.UniqueID]
 
-		if err != nil {
-			logrus.Panic(err)
+		if hasDestination {
+			regionId, err := data.ReadInt16()
+			if err != nil {
+				logrus.Panicf("failed to read regionId")
+			}
+			x, err := data.ReadInt16()
+			if err != nil {
+				logrus.Panicf("failed to read x")
+			}
+			y, err := data.ReadInt16()
+			if err != nil {
+				logrus.Panicf("failed to read y")
+			}
+			z, err := data.ReadInt16()
+			if err != nil {
+				logrus.Panicf("failed to read z")
+			}
+
+			region, err := world.GetRegion(regionId)
+
+			if err != nil {
+				logrus.Panic(err)
+			}
+
+			targetPos := model.Position{
+				X:       float32(x),
+				Y:       float32(y),
+				Z:       float32(z),
+				Heading: 0,
+				Region:  region,
+			}
+
+			//spawnEngine := spawn.GetSpawnEngineInstance()
+
+			p := network.EmptyPacket()
+			p.MessageID = opcode.EntityMovementResponse
+			p.WriteUInt32(player.UniqueID)
+			p.WriteByte(1)
+			p.WriteUInt16(uint16(regionId))
+			p.WriteUInt16(uint16(x) + 0xFFFF)
+			p.WriteUInt16(uint16(y))
+			p.WriteUInt16(uint16(z) + 0xFFFF)
+			p.WriteByte(1)
+			p.WriteUInt16(uint16(player.Position.Region.ID))
+			p.WriteUInt16(uint16(player.Position.X) * 10)
+			p.WriteFloat32(player.Position.Y)
+			p.WriteUInt16(uint16(player.Position.Z) * 10)
+
+			player.Session.Conn.Write(p.ToBytes())
+
+			//spawnEngine.StartedMoving(player, targetPos)
+
+			player.MoveToPosition(targetPos)
+
+			//walkToDestination(player, targetPos, spawnEngine)
+
+			logrus.Tracef("moving %s to position %d (%d|%d|%d)\n", player.CharName, regionId, x, y, z)
+		} else {
+			angleAction, err := data.ReadByte()
+			if err != nil {
+				logrus.Panicf("failed to read bool")
+			}
+			angle, err := data.ReadUInt16()
+			if err != nil {
+				logrus.Panicf("failed to read angle")
+			}
+			logrus.Tracef("MOVEMENT ANGLE %d %d\n", angleAction, angle)
 		}
-
-		targetPos := model.Position{
-			X:       float32(x),
-			Y:       float32(y),
-			Z:       float32(z),
-			Heading: 0,
-			Region:  region,
-		}
-
-		//spawnEngine := spawn.GetSpawnEngineInstance()
-
-		p := network.EmptyPacket()
-		p.MessageID = opcode.EntityMovementResponse
-		p.WriteUInt32(player.UniqueID)
-		p.WriteByte(1)
-		p.WriteUInt16(uint16(regionId))
-		p.WriteUInt16(uint16(x) + 0xFFFF)
-		p.WriteUInt16(uint16(y))
-		p.WriteUInt16(uint16(z) + 0xFFFF)
-		p.WriteByte(1)
-		p.WriteUInt16(uint16(player.Position.Region.ID))
-		p.WriteUInt16(uint16(player.Position.X) * 10)
-		p.WriteFloat32(player.Position.Y)
-		p.WriteUInt16(uint16(player.Position.Z) * 10)
-
-		player.Session.Conn.Write(p.ToBytes())
-
-		//spawnEngine.StartedMoving(player, targetPos)
-
-		player.MoveToPosition(targetPos)
-
-		//walkToDestination(player, targetPos, spawnEngine)
-
-		logrus.Tracef("moving %s to position %d (%d|%d|%d)\n", player.CharName, regionId, x, y, z)
-	} else {
-		angleAction, err := data.ReadByte()
-		if err != nil {
-			logrus.Panicf("failed to read bool")
-		}
-		angle, err := data.ReadUInt16()
-		if err != nil {
-			logrus.Panicf("failed to read angle")
-		}
-		logrus.Tracef("MOVEMENT ANGLE %d %d\n", angleAction, angle)
 	}
 }
 

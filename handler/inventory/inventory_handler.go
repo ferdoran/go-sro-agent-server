@@ -8,7 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type InventoryHandler struct{}
+type InventoryHandler struct {
+	channel chan server.PacketChannelData
+}
 
 type ItemInventoryOperation byte
 
@@ -43,25 +45,27 @@ const (
 	TakeItemFromPetInventoryOperation
 )
 
-func NewInventoryHandler() server.PacketHandler {
-	handler := InventoryHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.ItemOperationRequest, handler)
-	return handler
+func InitInventoryHandler() {
+	queue := server.PacketManagerInstance.GetQueue(opcode.ItemOperationRequest)
+	handler := InventoryHandler{channel: queue}
+	go handler.Handle()
 }
 
-func (h InventoryHandler) Handle(data server.PacketChannelData) {
+func (h *InventoryHandler) Handle() {
+	for {
+		data := <-h.channel
+		operationType, err := data.ReadByte()
+		if err != nil {
+			// FIXME not necessarily a fail but after a successful exchange a 0x7034 packet without payload is sent for each item that has been traded
+			logrus.Errorf("failed to read inventory operation type\n")
+		}
 
-	operationType, err := data.ReadByte()
-	if err != nil {
-		// FIXME not necessarily a fail but after a successful exchange a 0x7034 packet without payload is sent for each item that has been traded
-		logrus.Errorf("failed to read inventory operation type\n")
-	}
-
-	switch ItemInventoryOperation(operationType) {
-	case MoveItemOperation:
-		moveItem(data)
-	case DropGoldOperation:
-		dropGold(data)
+		switch ItemInventoryOperation(operationType) {
+		case MoveItemOperation:
+			moveItem(data)
+		case DropGoldOperation:
+			dropGold(data)
+		}
 	}
 }
 

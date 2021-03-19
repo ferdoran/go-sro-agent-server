@@ -9,24 +9,27 @@ import (
 )
 
 type PartyMatchingJoinRequestHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewPartyMatchingJoinRequestHandler() server.PacketHandler {
-	handler := PartyMatchingJoinRequestHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.PartyMatchingJoinRequest, handler)
-	return handler
+func InitPartyMatchingJoinRequestHandler() {
+	handler := PartyMatchingJoinRequestHandler{channel: server.PacketManagerInstance.GetQueue(opcode.PartyMatchingJoinRequest)}
+	go handler.Handle()
 }
 
-func (h PartyMatchingJoinRequestHandler) Handle(data server.PacketChannelData) {
-	partyNumber, err := data.ReadUInt32()
-	if err != nil {
-		log.Panicln("Failed to read party number")
+func (h *PartyMatchingJoinRequestHandler) Handle() {
+	for {
+		data := <-h.channel
+		partyNumber, err := data.ReadUInt32()
+		if err != nil {
+			log.Panicln("Failed to read party number")
+		}
+
+		model.CurrentRequestID++
+		requestId := model.CurrentRequestID
+		handler := &PartyMatchingPlayerJoinRequestHandler{}
+		handler.AskMaster(data, requestId, partyNumber)
 	}
-
-	model.CurrentRequestID++
-	requestId := model.CurrentRequestID
-	handler := &PartyMatchingPlayerJoinRequestHandler{}
-	handler.AskMaster(data, requestId, partyNumber)
 }
 
 func (h PartyMatchingJoinRequestHandler) SendJoinResponse(requestId uint32) {

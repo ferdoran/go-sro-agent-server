@@ -1,9 +1,5 @@
 package stall
 
-import (
-	"github.com/ferdoran/go-sro-framework/server"
-)
-
 const (
 	StallActionLeave byte = iota + 1
 	StallActionEnter
@@ -43,6 +39,6 @@ const (
 type StallHandler struct {
 }
 
-func (s *StallHandler) Handle(data server.PacketChannelData) {
+func (s *StallHandler) Handle() {
 
 }

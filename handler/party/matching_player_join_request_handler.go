@@ -10,37 +10,40 @@ import (
 )
 
 type PartyMatchingPlayerJoinRequestHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewPartyMatchingPlayerJoinRequestHandler() server.PacketHandler {
-	handler := PartyMatchingPlayerJoinRequestHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.PartyMatchingPlayerJoinRequest, handler)
-	return handler
+func InitPartyMatchingPlayerJoinRequestHandler() {
+	handler := PartyMatchingPlayerJoinRequestHandler{channel: server.PacketManagerInstance.GetQueue(opcode.PartyMatchingPlayerJoinRequest)}
+	go handler.Handle()
 }
 
-func (h PartyMatchingPlayerJoinRequestHandler) Handle(data server.PacketChannelData) {
-	requestId, err := data.ReadUInt32()
-	if err != nil {
-		log.Panicln("Failed to read request id")
-	}
+func (h *PartyMatchingPlayerJoinRequestHandler) Handle() {
+	for {
+		data := <-h.channel
+		requestId, err := data.ReadUInt32()
+		if err != nil {
+			log.Panicln("Failed to read request id")
+		}
 
-	_, err1 := data.ReadUInt32()
-	if err1 != nil {
-		log.Panicln("Failed to read player jid")
-	}
+		_, err1 := data.ReadUInt32()
+		if err1 != nil {
+			log.Panicln("Failed to read player jid")
+		}
 
-	acceptCode, err2 := data.ReadByte()
-	if err2 != nil {
-		log.Panicln("Failed to read acceptCode")
-	}
+		acceptCode, err2 := data.ReadByte()
+		if err2 != nil {
+			log.Panicln("Failed to read acceptCode")
+		}
 
-	if joinRequest, ok := model.GetJoinRequest(requestId); ok {
-		joinRequest.AcceptCode = uint16(acceptCode)
-		joinRequest.PutJoinRequest()
-	}
+		if joinRequest, ok := model.GetJoinRequest(requestId); ok {
+			joinRequest.AcceptCode = uint16(acceptCode)
+			joinRequest.PutJoinRequest()
+		}
 
-	joinRequestHandler := &PartyMatchingJoinRequestHandler{}
-	joinRequestHandler.SendJoinResponse(requestId)
+		joinRequestHandler := &PartyMatchingJoinRequestHandler{}
+		joinRequestHandler.SendJoinResponse(requestId)
+	}
 }
 
 func (h PartyMatchingPlayerJoinRequestHandler) AskMaster(data server.PacketChannelData, requestId, partyNumber uint32) {

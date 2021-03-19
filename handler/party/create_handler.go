@@ -8,10 +8,19 @@ import (
 )
 
 type PartyAgentCreateRequestHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func (h *PartyAgentCreateRequestHandler) Handle(data server.PacketChannelData) {
+func InitPartyAgentCreateRequestHandler() {
+	handler := PartyAgentCreateRequestHandler{channel: server.PacketManagerInstance.GetQueue(opcode.PartyCreateRequest)}
+	go handler.Handle()
+}
 
+func (h *PartyAgentCreateRequestHandler) Handle() {
+	// TODO: implement
+	//for {
+	//	data := <- h.channel
+	//}
 }
 
 func SendPartyCreateResponse(ptMasterUniqueId uint32) {

@@ -24,56 +24,58 @@ const (
 )
 
 type CharSelectionRenameRequestHandler struct {
-	Session *server.Session
+	channel chan server.PacketChannelData
 }
 
-func NewCharSelectionRenameRequestHandler() server.PacketHandler {
-	handler := CharSelectionRenameRequestHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.LobbyRenameRequest, handler)
-	return handler
+func InitCharSelectionRenameRequestHandler() {
+	handler := CharSelectionRenameRequestHandler{channel: server.PacketManagerInstance.GetQueue(opcode.LobbyRenameRequest)}
+	go handler.Handle()
 }
 
-func (h CharSelectionRenameRequestHandler) Handle(packet server.PacketChannelData) {
-	log.Println("AGENT_CHARACTER_SELECTION_RENAME")
+func (h *CharSelectionRenameRequestHandler) Handle() {
+	for {
+		packet := <-h.channel
+		log.Println("AGENT_CHARACTER_SELECTION_RENAME")
 
-	var result byte
-	action, err := packet.ReadByte()
-	if err != nil {
-		log.Panicln("Failed to read action")
+		var result byte
+		action, err := packet.ReadByte()
+		if err != nil {
+			log.Panicln("Failed to read action")
+		}
+
+		if action == CharSelectionCharacterRename || action == CharSelectionGuildRename {
+			currentGuildName, err := packet.ReadString()
+			if err != nil {
+				log.Panicln("Failed to read currentGuildName")
+			}
+
+			newGuildName, err := packet.ReadString()
+			if err != nil {
+				log.Panicln("Failed to read newGuildName")
+			}
+
+			log.Println(currentGuildName)
+			log.Println(newGuildName)
+
+			// TODO: Change the char / guild name
+		} else if action == CharSelectionGuildNameCheck {
+			guildName, err := packet.ReadString()
+			if err != nil {
+				log.Panicln("Failed to read guildName")
+			}
+
+			log.Println(guildName)
+			// TODO: Check if guild name exists
+		}
+
+		// TODO: Remove this after stuff above is implemented
+		result = ResultTrue
+
+		p := network.EmptyPacket()
+		p.MessageID = OpcodeCharSelectionRenameResponse
+
+		p.WriteByte(result)
+
+		packet.Session.Conn.Write(p.ToBytes())
 	}
-
-	if action == CharSelectionCharacterRename || action == CharSelectionGuildRename {
-		currentGuildName, err := packet.ReadString()
-		if err != nil {
-			log.Panicln("Failed to read currentGuildName")
-		}
-
-		newGuildName, err := packet.ReadString()
-		if err != nil {
-			log.Panicln("Failed to read newGuildName")
-		}
-
-		log.Println(currentGuildName)
-		log.Println(newGuildName)
-
-		// TODO: Change the char / guild name
-	} else if action == CharSelectionGuildNameCheck {
-		guildName, err := packet.ReadString()
-		if err != nil {
-			log.Panicln("Failed to read guildName")
-		}
-
-		log.Println(guildName)
-		// TODO: Check if guild name exists
-	}
-
-	// TODO: Remove this after stuff above is implemented
-	result = ResultTrue
-
-	p := network.EmptyPacket()
-	p.MessageID = OpcodeCharSelectionRenameResponse
-
-	p.WriteByte(result)
-
-	packet.Session.Conn.Write(p.ToBytes())
 }

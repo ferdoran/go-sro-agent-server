@@ -7,17 +7,20 @@ import (
 )
 
 type StallLeaveHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewStallLeaveHandler() server.PacketHandler {
-	handler := StallLeaveHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.StallLeaveRequest, handler)
-	return handler
+func InitStallLeaveHandler() {
+	handler := StallLeaveHandler{channel: server.PacketManagerInstance.GetQueue(opcode.StallLeaveRequest)}
+	go handler.Handle()
 }
 
-func (s StallLeaveHandler) Handle(data server.PacketChannelData) {
-	p := network.EmptyPacket()
-	p.MessageID = opcode.StallLeaveResponse
-	p.WriteByte(1)
-	data.Session.Conn.Write(p.ToBytes())
+func (s *StallLeaveHandler) Handle() {
+	for {
+		data := <-s.channel
+		p := network.EmptyPacket()
+		p.MessageID = opcode.StallLeaveResponse
+		p.WriteByte(1)
+		data.Session.Conn.Write(p.ToBytes())
+	}
 }

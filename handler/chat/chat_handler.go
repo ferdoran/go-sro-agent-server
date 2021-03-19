@@ -26,71 +26,75 @@ const (
 )
 
 type ChatHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewChatHandler() server.PacketHandler {
-	handler := ChatHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.ChatRequest, handler)
-	return handler
+func InitChatHandler() {
+	queue := server.PacketManagerInstance.GetQueue(opcode.ChatRequest)
+	handler := ChatHandler{channel: queue}
+	go handler.Handle()
 }
 
-func (h ChatHandler) Handle(data server.PacketChannelData) {
-	chatType, err := data.ReadByte()
-	if err != nil {
-		logrus.Panicln("Failed to read receiver")
-	}
-	chatIdx, err := data.ReadByte()
-	if err != nil {
-		logrus.Panicln("Failed to read receiver")
-	}
-
-	request := MessageRequest{
-		ChatType:  chatType,
-		ChatIndex: chatIdx,
-		Receiver:  "",
-		Message:   "",
-	}
-
-	if chatType == PM {
-		receiver, err := data.ReadString()
+func (h *ChatHandler) Handle() {
+	for {
+		data := <-h.channel
+		chatType, err := data.ReadByte()
 		if err != nil {
 			logrus.Panicln("Failed to read receiver")
 		}
-		logrus.Tracef("PM message receiver: %v\n", receiver)
-		request.Receiver = receiver
-	}
+		chatIdx, err := data.ReadByte()
+		if err != nil {
+			logrus.Panicln("Failed to read receiver")
+		}
 
-	msg, err := data.ReadString()
-	if err != nil {
-		logrus.Panicln("Failed to read message")
-	}
-	request.Message = msg
+		request := MessageRequest{
+			ChatType:  chatType,
+			ChatIndex: chatIdx,
+			Receiver:  "",
+			Message:   "",
+		}
 
-	switch request.ChatType {
-	case All:
-		handleAllMessage(request, data.Session)
-	case Party:
-		handlePartyMessage(request, data.Session)
-	case Guild:
+		if chatType == PM {
+			receiver, err := data.ReadString()
+			if err != nil {
+				logrus.Panicln("Failed to read receiver")
+			}
+			logrus.Tracef("PM message receiver: %v\n", receiver)
+			request.Receiver = receiver
+		}
 
-	case Global:
-		handleGlobalMessage(request, data.Session)
-	case Notice:
+		msg, err := data.ReadString()
+		if err != nil {
+			logrus.Panicln("Failed to read message")
+		}
+		request.Message = msg
 
-	case Stall:
-		handleStallMessage(request, data.Session)
-	case Union:
+		switch request.ChatType {
+		case All:
+			handleAllMessage(request, data.Session)
+		case Party:
+			handlePartyMessage(request, data.Session)
+		case Guild:
 
-	case NPC:
+		case Global:
+			handleGlobalMessage(request, data.Session)
+		case Notice:
 
-	case Academy:
+		case Stall:
+			handleStallMessage(request, data.Session)
+		case Union:
 
-	case PM:
-		handleWhisperMessage(request, data.Session)
-	case AllGM:
-		gmh := GetGmMessageHandlerInstance()
-		gmh.HandleAdminMessage(request, data.Session)
-	default:
-		logrus.Debugf("unhandled chat message %v\n", request)
+		case NPC:
+
+		case Academy:
+
+		case PM:
+			handleWhisperMessage(request, data.Session)
+		case AllGM:
+			gmh := GetGmMessageHandlerInstance()
+			gmh.HandleAdminMessage(request, data.Session)
+		default:
+			logrus.Debugf("unhandled chat message %v\n", request)
+		}
 	}
 }

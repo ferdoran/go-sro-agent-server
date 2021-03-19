@@ -41,24 +41,29 @@ const (
 	OpenMarket   GuideFlag = 134217728
 )
 
-type GuideHandler struct{}
-
-func NewGuideHandler() server.PacketHandler {
-	handler := GuideHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.GuideRequest, handler)
-	return handler
+type GuideHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func (h GuideHandler) Handle(data server.PacketChannelData) {
-	// TODO implement real logic
-	gflag, err := data.ReadUInt64()
-	if err != nil {
-		logrus.Panicf("failed to read guide flag")
-	}
+func InitGuideHandler() {
+	queue := server.PacketManagerInstance.GetQueue(opcode.GuideRequest)
+	handler := GuideHandler{channel: queue}
+	go handler.Handle()
+}
 
-	p := network.EmptyPacket()
-	p.MessageID = opcode.GuideResponse
-	p.WriteByte(1)
-	p.WriteUInt64(gflag)
-	data.Conn.Write(p.ToBytes())
+func (h *GuideHandler) Handle() {
+	for {
+		data := <-h.channel
+		// TODO implement real logic
+		gflag, err := data.ReadUInt64()
+		if err != nil {
+			logrus.Panicf("failed to read guide flag")
+		}
+
+		p := network.EmptyPacket()
+		p.MessageID = opcode.GuideResponse
+		p.WriteByte(1)
+		p.WriteUInt64(gflag)
+		data.Conn.Write(p.ToBytes())
+	}
 }

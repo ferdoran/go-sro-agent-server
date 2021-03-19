@@ -9,13 +9,16 @@ import (
 )
 
 type LogoutHandler struct {
+	logoutRequestChannel chan server.PacketChannelData
+	logoutCancelChannel  chan server.PacketChannelData
 }
 
-func NewLogoutHandler() server.PacketHandler {
-	handler := LogoutHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.AgentLogoutRequest, handler)
-	server.PacketManagerInstance.RegisterHandler(opcode.AgentLogoutCancelRequest, handler)
-	return handler
+func InitLogoutHandler() {
+	handler := LogoutHandler{
+		logoutRequestChannel: server.PacketManagerInstance.GetQueue(opcode.AgentLogoutRequest),
+		logoutCancelChannel:  server.PacketManagerInstance.GetQueue(opcode.AgentLogoutCancelRequest),
+	}
+	go handler.Handle()
 }
 
 const (
@@ -26,12 +29,14 @@ const (
 	CountdownTime byte = 5
 )
 
-func (h LogoutHandler) Handle(data server.PacketChannelData) {
-	switch data.MessageID {
-	case opcode.AgentLogoutCancelRequest:
-		doCancelLogout(data)
-	case opcode.AgentLogoutRequest:
-		doLogout(data)
+func (h LogoutHandler) Handle() {
+	for {
+		select {
+		case data := <-h.logoutRequestChannel:
+			doLogout(data)
+		case data := <-h.logoutCancelChannel:
+			doCancelLogout(data)
+		}
 	}
 }
 

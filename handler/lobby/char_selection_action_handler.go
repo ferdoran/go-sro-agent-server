@@ -45,233 +45,236 @@ const (
 )
 
 type CharSelectionActionRequestHandler struct {
+	channel chan server.PacketChannelData
 }
 
-func NewCharSelectionActionRequestHandler() server.PacketHandler {
-	handler := CharSelectionActionRequestHandler{}
-	server.PacketManagerInstance.RegisterHandler(opcode.LobbyActionRequest, handler)
-	return handler
+func InitCharSelectionActionRequestHandler() {
+	handler := CharSelectionActionRequestHandler{channel: server.PacketManagerInstance.GetQueue(opcode.LobbyActionRequest)}
+	go handler.Handle()
 }
 
-func (h CharSelectionActionRequestHandler) Handle(packet server.PacketChannelData) {
-	log.Println("AGENT_CHARACTER_SELECTION_ACTION")
+func (h *CharSelectionActionRequestHandler) Handle() {
+	for {
+		packet := <-h.channel
+		log.Println("AGENT_CHARACTER_SELECTION_ACTION")
 
-	var result byte
+		var result byte
 
-	// TODO: Remove this after stuff above is implemented
-	result = ResultTrue
+		// TODO: Remove this after stuff above is implemented
+		result = ResultTrue
 
-	action, err := packet.ReadByte()
-	if err != nil {
-		log.Panicln("Failed to read action")
-	}
-
-	p := network.EmptyPacket()
-	p.MessageID = OpcodeCharSelectionActionResponse
-
-	if action == CharActionCreate {
-		username, err := packet.ReadString()
+		action, err := packet.ReadByte()
 		if err != nil {
-			log.Panicln("Failed to read username")
+			log.Panicln("Failed to read action")
 		}
 
-		charModel, err := packet.ReadUInt32()
-		if err != nil {
-			log.Panicln("Failed to read charModel")
-		}
+		p := network.EmptyPacket()
+		p.MessageID = OpcodeCharSelectionActionResponse
 
-		charScale, err := packet.ReadByte()
-		if err != nil {
-			log.Panicln("Failed to read scale")
-		}
+		if action == CharActionCreate {
+			username, err := packet.ReadString()
+			if err != nil {
+				log.Panicln("Failed to read username")
+			}
 
-		equippedChest, err := packet.ReadUInt32()
-		if err != nil {
-			log.Panicln("Failed to read equippedChest")
-		}
+			charModel, err := packet.ReadUInt32()
+			if err != nil {
+				log.Panicln("Failed to read charModel")
+			}
 
-		equippedPants, err := packet.ReadUInt32()
-		if err != nil {
-			log.Panicln("Failed to read equippedPants")
-		}
+			charScale, err := packet.ReadByte()
+			if err != nil {
+				log.Panicln("Failed to read scale")
+			}
 
-		equippedBoots, err := packet.ReadUInt32()
-		if err != nil {
-			log.Panicln("Failed to read equippedBoots")
-		}
+			equippedChest, err := packet.ReadUInt32()
+			if err != nil {
+				log.Panicln("Failed to read equippedChest")
+			}
 
-		equippedWeapon, err := packet.ReadUInt32()
-		if err != nil {
-			log.Panicln("Failed to read equippedWeapon")
-		}
+			equippedPants, err := packet.ReadUInt32()
+			if err != nil {
+				log.Panicln("Failed to read equippedPants")
+			}
 
-		// TODO: Spawn coords for JG
-		char := model.Char{
-			RefObjID:   int(charModel),
-			User:       int(packet.Session.UserContext.UserID),
-			Shard:      int(packet.Session.UserContext.ShardID),
-			Name:       username,
-			Scale:      charScale,
-			Level:      1,
-			Exp:        0,
-			SkillExp:   0,
-			Str:        20,
-			Int:        20,
-			StatPoints: 0,
-			HP:         200,
-			MP:         200,
-			PosX:       950,
-			PosY:       40,
-			PosZ:       1091,
-			Region:     0x62A8,
-			IsDeleting: false,
-		}
+			equippedBoots, err := packet.ReadUInt32()
+			if err != nil {
+				log.Panicln("Failed to read equippedBoots")
+			}
 
-		if res, _ := model.CreateChar(char, equippedWeapon, equippedChest, equippedBoots, equippedPants); res {
-			result = ResultTrue
-		} else {
-			result = ResultFalse
-		}
+			equippedWeapon, err := packet.ReadUInt32()
+			if err != nil {
+				log.Panicln("Failed to read equippedWeapon")
+			}
 
-		p.WriteByte(action)
-		p.WriteByte(result)
+			// TODO: Spawn coords for JG
+			char := model.Char{
+				RefObjID:   int(charModel),
+				User:       int(packet.Session.UserContext.UserID),
+				Shard:      int(packet.Session.UserContext.ShardID),
+				Name:       username,
+				Scale:      charScale,
+				Level:      1,
+				Exp:        0,
+				SkillExp:   0,
+				Str:        20,
+				Int:        20,
+				StatPoints: 0,
+				HP:         200,
+				MP:         200,
+				PosX:       950,
+				PosY:       40,
+				PosZ:       1091,
+				Region:     0x62A8,
+				IsDeleting: false,
+			}
 
-	} else if action == CharActionDelete || action == CharActionCheckName || action == CharActionRestore {
-		username, err := packet.ReadString()
-		if err != nil {
-			log.Panicln("Failed to read username")
-		}
-
-		if action == CharActionDelete {
-			// TODO: Do actually delete after 3 days or something.
-			if res := model.MarkCharIsDeletion(1, username); res {
+			if res, _ := model.CreateChar(char, equippedWeapon, equippedChest, equippedBoots, equippedPants); res {
 				result = ResultTrue
 			} else {
 				result = ResultFalse
 			}
-		} else if action == CharActionCheckName {
-			if res := model.DoesCharNameExist(username); res {
-				result = ResultFalse
-				p.WriteUInt16(0x40D)
-			} else {
-				result = ResultTrue
+
+			p.WriteByte(action)
+			p.WriteByte(result)
+
+		} else if action == CharActionDelete || action == CharActionCheckName || action == CharActionRestore {
+			username, err := packet.ReadString()
+			if err != nil {
+				log.Panicln("Failed to read username")
 			}
-		} else if action == CharActionRestore {
-			if res := model.MarkCharIsDeletion(0, username); res {
-				result = ResultTrue
-			} else {
-				result = ResultFalse
+
+			if action == CharActionDelete {
+				// TODO: Do actually delete after 3 days or something.
+				if res := model.MarkCharIsDeletion(1, username); res {
+					result = ResultTrue
+				} else {
+					result = ResultFalse
+				}
+			} else if action == CharActionCheckName {
+				if res := model.DoesCharNameExist(username); res {
+					result = ResultFalse
+					p.WriteUInt16(0x40D)
+				} else {
+					result = ResultTrue
+				}
+			} else if action == CharActionRestore {
+				if res := model.MarkCharIsDeletion(0, username); res {
+					result = ResultTrue
+				} else {
+					result = ResultFalse
+				}
 			}
 		}
-	}
 
-	if result == ResultTrue && action == CharActionList {
-		p.WriteByte(action)
-		p.WriteByte(result)
+		if result == ResultTrue && action == CharActionList {
+			p.WriteByte(action)
+			p.WriteByte(result)
 
-		// TODO: Get real user id
-		chars := model.GetCharactersByUserId(int(packet.Session.UserContext.UserID))
-		p.WriteByte(byte(len(chars)))
+			// TODO: Get real user id
+			chars := model.GetCharactersByUserId(int(packet.Session.UserContext.UserID))
+			p.WriteByte(byte(len(chars)))
 
-		for _, char := range chars {
-			// Char data
-			p.WriteUInt32(uint32(char.RefObjID))
-			p.WriteString(char.Name)
-			p.WriteByte(byte(char.Scale))
-			p.WriteByte(byte(char.Level))
-			p.WriteUInt64(uint64(char.Exp))
-			p.WriteUInt16(uint16(char.Str))
-			p.WriteUInt16(uint16(char.Int))
-			p.WriteUInt16(uint16(char.StatPoints))
-			p.WriteUInt32(uint32(char.HP))
-			p.WriteUInt32(uint32(char.MP))
-			// Is deleting
-			if char.IsDeleting {
-				p.WriteByte(ResultTrue)
-				now := time.Now().UTC()
-				diff := char.Utime.Add(DeletionTimeInDays * 24 * time.Hour).Sub(now)
-				p.WriteUInt32(uint32(int(diff.Minutes())))
-			} else {
+			for _, char := range chars {
+				// Char data
+				p.WriteUInt32(uint32(char.RefObjID))
+				p.WriteString(char.Name)
+				p.WriteByte(byte(char.Scale))
+				p.WriteByte(byte(char.Level))
+				p.WriteUInt64(uint64(char.Exp))
+				p.WriteUInt16(uint16(char.Str))
+				p.WriteUInt16(uint16(char.Int))
+				p.WriteUInt16(uint16(char.StatPoints))
+				p.WriteUInt32(uint32(char.HP))
+				p.WriteUInt32(uint32(char.MP))
+				// Is deleting
+				if char.IsDeleting {
+					p.WriteByte(ResultTrue)
+					now := time.Now().UTC()
+					diff := char.Utime.Add(DeletionTimeInDays * 24 * time.Hour).Sub(now)
+					p.WriteUInt32(uint32(int(diff.Minutes())))
+				} else {
+					p.WriteByte(0)
+				}
+				// Guild
+				// TODO: Add a real check
+				// 	0 - No Guild
+				// 	1 - Member
+				// 	2 - Master
+				p.WriteByte(0)
+				p.WriteByte(0)
+				// Academy
+				// TODO: Add a real check
+				// 	0 - No Academy
+				// 	1 - Member
+				// 	2 - Master
+				p.WriteByte(0)
+				// Items
+				inv := model.GetCharacterInventory(int64(char.ID))
+				p.WriteByte(byte(len(inv.Items)))
+				for _, item := range inv.Items {
+					// TODO: Only send certain items (armor + weapon)
+					p.WriteUInt32(item.GetRefObjectID())
+					// TODO: Add a real check for item + value
+					p.WriteByte(0) // Plus
+
+				}
+
+				// Avatar
+				// TODO: Add a real check
 				p.WriteByte(0)
 			}
-			// Guild
-			// TODO: Add a real check
-			// 	0 - No Guild
-			// 	1 - Member
-			// 	2 - Master
-			p.WriteByte(0)
-			p.WriteByte(0)
-			// Academy
-			// TODO: Add a real check
-			// 	0 - No Academy
-			// 	1 - Member
-			// 	2 - Master
-			p.WriteByte(0)
-			// Items
-			inv := model.GetCharacterInventory(int64(char.ID))
-			p.WriteByte(byte(len(inv.Items)))
-			for _, item := range inv.Items {
-				// TODO: Only send certain items (armor + weapon)
-				p.WriteUInt32(item.GetRefObjectID())
-				// TODO: Add a real check for item + value
-				p.WriteByte(0) // Plus
+			// TODO: Get the chars
+			/*
+				1   byte    characterCount
+				foreach(character)
+				{
+					4   uint    character.RefObjID
+					2   ushort  character.Name.Length
+					*   string  character.Name
+					1   byte    character.Scale
+					1   byte    character.CurLevel
+					8   ulong   character.ExpOffset
+					2   ushort  character.Strength
+					2   ushort  character.Intelligence
+					2   ushort  character.StatPoint
+					4   uint    character.CurHP
+					4   uint    character.CurMP
+					1   bool    isDeleting
+					if(isDeleting)
+					{
+						4   uint    character.DeleteTime	//in Minutes
+					}
 
-			}
+					1   byte    guildMemberClass
+					1   bool    isGuildRenameRequired
+					if(isGuildRenameRequired)
+					{
+						2   ushort  CurGuildName.Length
+						*   string  CurGuildName
+					}
+					1   byte    academyMemberClass
 
-			// Avatar
-			// TODO: Add a real check
-			p.WriteByte(0)
+					1   byte    itemCount
+					foreach(item)
+					{
+						4   uint    item.RefItemID
+						1   byte    item.Plus
+					}
+
+					1   byte    avatarItemCount
+					foreach(avatarItem)
+					{
+						4   uint    avatarItem.RefItemID
+						1   byte    avatarItem.Plus
+					}
+				}
+			*/
+		} else {
+			p.WriteByte(action)
+			p.WriteByte(result)
 		}
-		// TODO: Get the chars
-		/*
-			1   byte    characterCount
-			foreach(character)
-			{
-				4   uint    character.RefObjID
-				2   ushort  character.Name.Length
-				*   string  character.Name
-				1   byte    character.Scale
-				1   byte    character.CurLevel
-				8   ulong   character.ExpOffset
-				2   ushort  character.Strength
-				2   ushort  character.Intelligence
-				2   ushort  character.StatPoint
-				4   uint    character.CurHP
-				4   uint    character.CurMP
-				1   bool    isDeleting
-				if(isDeleting)
-				{
-					4   uint    character.DeleteTime	//in Minutes
-				}
 
-				1   byte    guildMemberClass
-				1   bool    isGuildRenameRequired
-				if(isGuildRenameRequired)
-				{
-					2   ushort  CurGuildName.Length
-					*   string  CurGuildName
-				}
-				1   byte    academyMemberClass
-
-				1   byte    itemCount
-				foreach(item)
-				{
-					4   uint    item.RefItemID
-					1   byte    item.Plus
-				}
-
-				1   byte    avatarItemCount
-				foreach(avatarItem)
-				{
-					4   uint    avatarItem.RefItemID
-					1   byte    avatarItem.Plus
-				}
-			}
-		*/
-	} else {
-		p.WriteByte(action)
-		p.WriteByte(result)
+		packet.Session.Conn.Write(p.ToBytes())
 	}
-
-	packet.Session.Conn.Write(p.ToBytes())
 }
