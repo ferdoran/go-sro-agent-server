@@ -41,8 +41,8 @@ github.com/ferdoran/go-sro-fileutils v0.0.0-20201215213848-71bb43224391 h1:Gn8pv
 github.com/ferdoran/go-sro-fileutils v0.0.0-20201215213848-71bb43224391/go.mod h1:wG2CYWmRC93D04AuMyYH1HANTlh+yMRCyiNHXXe9jg0=
 github.com/ferdoran/go-sro-framework v1.3.1 h1:WcpgGP9tla40Vz7YYVc9LeFkKOK6hCrMJ3AE2sOZvw0=
 github.com/ferdoran/go-sro-framework v1.3.1/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
-github.com/ferdoran/go-sro-framework v1.3.2 h1:86BF72SXLkGRF6ucvfvEETmbEwajnRJCno6GpZb+aZs=
-github.com/ferdoran/go-sro-framework v1.3.2/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
+github.com/ferdoran/go-sro-framework v1.3.3 h1:cRNnPX57iE38KERY2MBG36TPfLvNWonpPC5RKRTcWJU=
+github.com/ferdoran/go-sro-framework v1.3.3/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
 github.com/ferdoran/go-sro-gateway-server v1.3.0 h1:xPLdBdMiPFZT2cIowgXWcEFGiHClnPMyROZ+nx81Wtg=
 github.com/ferdoran/go-sro-gateway-server v1.3.0/go.mod h1:MEv45W2mclpSItf+GiC+kKu2b49z6XI3H+PYy6oue3A=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
