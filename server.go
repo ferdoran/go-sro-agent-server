@@ -162,7 +162,7 @@ func (a *AgentServer) serverModuleConnected(data server.BackendConnectionData) {
 func main() {
 	config.Initialize()
 	logging.Init()
-	boot.SetPhases("gamedata", "services", "network", "packethandler")
+	boot.SetPhases("gamedata", "services", "packethandler", "network")
 	reader := bufio.NewReader(os.Stdin)
 
 	loadGameData := func() {
@@ -198,8 +198,8 @@ func main() {
 
 	log.Println("starting agent server...")
 
+	agentServer := NewAgentServer()
 	startAgentServer := func() {
-		agentServer := NewAgentServer()
 		agentServer.Start()
 	}
 
