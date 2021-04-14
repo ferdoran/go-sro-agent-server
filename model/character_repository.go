@@ -4,6 +4,7 @@ import (
 	"github.com/ferdoran/go-sro-framework/db"
 	log "github.com/sirupsen/logrus"
 	"time"
+	"database/sql"
 )
 
 type Char struct {
@@ -60,7 +61,7 @@ func GetCharactersByUserId(userid int) []Char {
 		var exp, skillExp int64
 		var name string
 		var isDeleting int
-		var utime time.Time
+		var utime sql.NullTime
 		var regionId int16
 
 		err = queryHandle.Scan(&id, &refObjId, &name, &scale, &level, &exp, &skillExp, &strength, &intellect, &statPoints, &hp, &mp, &isDeleting, &utime, &regionId)
@@ -79,7 +80,7 @@ func GetCharactersByUserId(userid int) []Char {
 			StatPoints: statPoints,
 			HP:         hp,
 			MP:         mp,
-			Utime:      utime,
+			Utime:      utime.Time,
 			IsDeleting: isDeleting == 1,
 			Region:     regionId,
 		})
