@@ -7,6 +7,7 @@ require (
 	github.com/ferdoran/go-sro-framework v1.3.3
 	github.com/ferdoran/go-sro-gateway-server v1.3.0
 	github.com/g3n/engine v0.1.0
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.6.1

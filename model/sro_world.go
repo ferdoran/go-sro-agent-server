@@ -62,11 +62,11 @@ func (w *SroWorld) AddPlayer(p *Player) {
 
 func (w *SroWorld) AddVisibleObject(o ISRObject) {
 	w.mutex.Lock()
+	defer w.mutex.Unlock()
 	w.VisibleObjects[w.uniqueIdCounter] = o
 	o.SetUniqueID(w.uniqueIdCounter)
 	w.uniqueIdCounter++
 	o.GetPosition().Region.AddVisibleObject(o)
-	w.mutex.Unlock()
 }
 
 func (w *SroWorld) PlayerDisconnected(uid uint32, charName string) {
@@ -74,7 +74,7 @@ func (w *SroWorld) PlayerDisconnected(uid uint32, charName string) {
 	defer w.mutex.Unlock()
 
 	for _, reg := range w.regions {
-		for _, obj := range reg.VisibleObjects {
+		for _, obj := range reg.GetVisibleObjects() {
 			obj.GetKnownObjectList().RemoveObject(w.PlayersByCharName[charName])
 		}
 		reg.RemoveVisibleObject(w.VisibleObjects[uid])
@@ -126,7 +126,7 @@ func (w *SroWorld) LoadGameServerRegions(gameServerId int) map[int16]*Region {
 		w.AddRegions(region.ContinentName, region.Regions...)
 		w.LoadSpawnDataForContinent(region.ContinentName)
 	}
-	GetSroWorldInstance().regions = w.regions
+
 	log.Info("finished loading game server regions")
 	return w.regions
 }
@@ -180,6 +180,7 @@ func (w *SroWorld) GetRegions() map[int16]*Region {
 
 func (w *SroWorld) LoadSpawnDataForContinent(continent string) {
 	spawns := GetSpawnsForContinent(continent)
+	log.Infof("initialising %d spawns", len(spawns))
 	for _, spawn := range spawns {
 		reg := w.regions[spawn.RegionID]
 		if reg == nil {
@@ -198,8 +199,11 @@ func (w *SroWorld) LoadSpawnDataForContinent(continent string) {
 			NpcCodeName:    spawn.NpcCodeName,
 			Radius:         spawn.Radius,
 			GenerateRadius: spawn.GenerateRadius,
+			MaxTotalCount:  spawn.MaxTotalCount,
+			DelayTimeMin:   spawn.DelayTimeMin,
+			DelayTimeMax:   spawn.DelayTimeMax,
 		}
-		reg.Spawns = append(reg.Spawns, s)
+		reg.Spawns = append(reg.Spawns, InitSpawnAreaFromSpawnNest(s))
 	}
 }
 

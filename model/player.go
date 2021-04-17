@@ -7,6 +7,7 @@ import (
 	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sync"
 	"time"
@@ -338,7 +339,11 @@ func (p *Player) UpdatePosition() bool {
 	}
 	nextPosVec := curWorldVec.Clone().Add(walkVector.MultiplyScalar(movementSpeed * float32(deltaTime.Seconds())))
 
-	newPos := NewPosFromWorldCoordinates(nextPosVec.X, nextPosVec.Z)
+	newPos, err := NewPosFromWorldCoordinates(nextPosVec.X, nextPosVec.Z)
+
+	if err != nil {
+		logrus.Panic(errors.Wrap(err, "failed to calculate new player position"))
+	}
 
 	if p.MovementData.HasDestination && curPos.DistanceToSquared(newPos) >= curPos.DistanceToSquared(p.MovementData.TargetPosition) {
 		newPos = p.MovementData.TargetPosition

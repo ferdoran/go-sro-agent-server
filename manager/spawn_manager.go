@@ -21,7 +21,7 @@ func GetSpawnManagerInstance() *SpawnManager {
 		spawnManagerInstance = &SpawnManager{}
 		spawnManagerInstance.Name = "SpawnManager"
 		spawnManagerInstance.initialDelay = time.Second
-		spawnManagerInstance.rate = time.Millisecond * 100
+		spawnManagerInstance.rate = time.Second
 		spawnManagerInstance.runnerFunc = spawnManagerInstance.updateSpawns
 	})
 	return spawnManagerInstance
@@ -33,7 +33,7 @@ func (s *SpawnManager) updateSpawns() {
 		select {
 		case <-s.ticker.C:
 			for _, region := range world.GetRegions() {
-				for _, object := range region.VisibleObjects {
+				for _, object := range region.GetVisibleObjects() {
 
 					if player, isPlayer := object.(model.IPlayer); isPlayer {
 						objectsToDespawn := player.GetCharKnownObjectList().GetObjectsToDespawn()

@@ -74,12 +74,15 @@ func (p *Position) GetCell() *TerrainCell {
 	return p.Region.GetCellAtOffset(p.X, p.Z)
 }
 
-func NewPosFromWorldCoordinates(x, z float32) Position {
+func NewPosFromWorldCoordinates(x, z float32) (Position, error) {
 	regionX := byte(x / RegionWidth)
 	regionZ := byte(z / RegionHeight)
 
 	regionId := utils.XAndZToInt16(regionX, regionZ)
-	region, _ := sroWorldInstance.GetRegion(regionId)
+	region, err := sroWorldInstance.GetRegion(regionId)
+	if err != nil {
+		return Position{}, err
+	}
 	pX := x - float32(regionX)*float32(RegionWidth)
 	pZ := z - float32(regionZ)*float32(RegionHeight)
 	pY := region.GetYAtOffset(pX, pZ)
@@ -90,7 +93,7 @@ func NewPosFromWorldCoordinates(x, z float32) Position {
 		Z:       pZ,
 		Heading: 0,
 		Region:  region,
-	}
+	}, nil
 }
 
 func (p *Position) nextPositionIsSlope(nextPos Position) bool {

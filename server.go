@@ -187,11 +187,9 @@ func main() {
 
 	startServices := func() {
 		manager.GetGameTimeManagerInstance().Start()
-		klm := manager.GetKnownListManager()
-		klm.Start()
-		sm := manager.GetSpawnManagerInstance()
-		sm.Start()
-		model.GetSroWorldInstance().InitiallySpawnAllNpcs()
+		manager.GetKnownListManager().Start()
+		manager.GetSpawnManagerInstance().Start()
+		manager.GetRespawnManagerInstance().Start()
 	}
 
 	boot.RegisterComponent("services", startServices, 1)

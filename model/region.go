@@ -26,9 +26,9 @@ type Region struct {
 	WorldToRegion     *math32.Matrix4
 	GlobalEdgeFlags   map[byte]int
 	InternalEdgeFlags map[byte]int
-	Spawns            []Spawn
+	Spawns            []*SpawnArea
 	VisibleObjects    map[uint32]ISRObject
-	mutex             sync.Mutex
+	mutex             sync.RWMutex
 }
 
 func NewRegionFromNavMeshData(id int16, data navmesh.NavMeshData) Region {
@@ -39,7 +39,7 @@ func NewRegionFromNavMeshData(id int16, data navmesh.NavMeshData) Region {
 		TileMap:        data.TileMap,
 		InternalEdges:  data.NavMeshInternalEdges,
 		GlobalEdges:    data.NavMeshGlobalEdges,
-		Spawns:         make([]Spawn, 0),
+		Spawns:         make([]*SpawnArea, 0),
 		VisibleObjects: make(map[uint32]ISRObject),
 	}
 
@@ -88,6 +88,18 @@ func (r *Region) LinkInternalEdges() {
 	//logrus.Tracef("skipped %d edges for region %d\n", len(skippedEdges), r.ID)
 }
 
+func (r *Region) GetVisibleObjects() []ISRObject {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+
+	arr := make([]ISRObject, 0)
+
+	for _, v := range r.VisibleObjects {
+		arr = append(arr, v)
+	}
+	return arr
+}
+
 func (r *Region) LinkGlobalEdges(regions map[int16]*Region) {
 	for _, edge := range r.GlobalEdges.GlobalEdges {
 		destRegion := regions[int16(edge.AssocRegion1)]
@@ -129,10 +141,25 @@ func (r *Region) GetYAtOffset(x, z float32) float32 {
 	tX := int(x / 20)
 	tZ := int(z / 20)
 
-	h1 := r.HeightMap.Heights[tX+97*tZ]
-	h2 := r.HeightMap.Heights[tX+97*(tZ+1)]
-	h3 := r.HeightMap.Heights[(tX+1)+97*tZ]
-	h4 := r.HeightMap.Heights[(tX+1)+97*(tZ+1)]
+	index1 := tX + 97*tZ
+	index2 := tX + 97*(tZ+1)
+	index3 := (tX + 1) + 97*tZ
+	index4 := (tX + 1) + 97*(tZ+1)
+
+	if l := len(r.HeightMap.Heights); index1 >= l {
+		logrus.Warnf("index1 %d out of range %d", index1, l)
+	} else if index2 >= l {
+		logrus.Warnf("index2 %d out of range %d", index2, l)
+	} else if index3 >= l {
+		logrus.Warnf("index3 %d out of range %d", index3, l)
+	} else if index4 >= l {
+		logrus.Warnf("index4 %d out of range %d", index4, l)
+	}
+
+	h1 := r.HeightMap.Heights[index1]
+	h2 := r.HeightMap.Heights[index2]
+	h3 := r.HeightMap.Heights[index3]
+	h4 := r.HeightMap.Heights[index4]
 
 	// h1--------h3
 	// |   |      |
@@ -233,12 +260,12 @@ func (r *Region) GetKnownObjectsAroundObject(object ISRObject) map[uint32]ISRObj
 	regions := r.GetNeighbourRegions()
 	knownObjects := make(map[uint32]ISRObject)
 	for _, reg := range regions {
-		for _, otherObject := range reg.VisibleObjects {
+		for _, otherObject := range reg.GetVisibleObjects() {
 			if object.GetUniqueID() == otherObject.GetUniqueID() {
 				continue
 			}
 
-			if object.GetPosition().DistanceTo(otherObject.GetPosition()) <= 500 {
+			if object.GetPosition().DistanceTo(otherObject.GetPosition()) <= 900 {
 				// TODO What about stealth / invisible characters?
 				knownObjects[otherObject.GetUniqueID()] = otherObject
 			}
