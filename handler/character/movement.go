@@ -2,10 +2,11 @@ package character
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
-	"github.com/g3n/engine/math32"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,6 +21,8 @@ func InitMovementHandler() {
 }
 
 func (mh *MovementHandler) Handle() {
+	movementService := service.GetMovementServiceInstance()
+	world := service.GetWorldServiceInstance()
 	for {
 		data := <-mh.channel
 		hasDestination, err := data.ReadBool()
@@ -27,8 +30,11 @@ func (mh *MovementHandler) Handle() {
 			logrus.Panicf("failed to read movement type")
 		}
 
-		world := model.GetSroWorldInstance()
-		player := world.PlayersByUniqueId[data.UserContext.UniqueID]
+		player, err := world.GetPlayerByUniqueId(data.UserContext.UniqueID)
+
+		if err != nil {
+			logrus.Panic(errors.Wrap(err, "failed to process movement request"))
+		}
 
 		if hasDestination {
 			regionId, err := data.ReadInt16()
@@ -73,17 +79,16 @@ func (mh *MovementHandler) Handle() {
 			p.WriteUInt16(uint16(y))
 			p.WriteUInt16(uint16(z) + 0xFFFF)
 			p.WriteByte(1)
-			p.WriteUInt16(uint16(player.Position.Region.ID))
-			p.WriteUInt16(uint16(player.Position.X) * 10)
-			p.WriteFloat32(player.Position.Y)
-			p.WriteUInt16(uint16(player.Position.Z) * 10)
+			p.WriteUInt16(uint16(player.GetPosition().Region.ID))
+			p.WriteUInt16(uint16(player.GetPosition().X) * 10)
+			p.WriteFloat32(player.GetPosition().Y)
+			p.WriteUInt16(uint16(player.GetPosition().Z) * 10)
 
-			player.Session.Conn.Write(p.ToBytes())
+			player.GetSession().Conn.Write(p.ToBytes())
 
 			//spawnEngine.StartedMoving(player, targetPos)
-
-			player.MoveToPosition(targetPos)
-
+			//player.MoveToPosition(targetPos)
+			movementService.MoveToPosition(player, targetPos)
 			//walkToDestination(player, targetPos, spawnEngine)
 
 			logrus.Tracef("moving %s to position %d (%d|%d|%d)\n", player.CharName, regionId, x, y, z)
@@ -226,16 +231,3 @@ func (mh *MovementHandler) Handle() {
 //		}
 //	}()
 //}
-
-func IsNextPositionTooHigh(curPos, newPos model.Position) bool {
-	x, _, z := curPos.ToWorldCoordinates()
-	x1, _, z1 := newPos.ToWorldCoordinates()
-	v0 := math32.NewVector3(x, 0, z)
-	v1 := math32.NewVector3(x1, 0, z1)
-
-	adjacent := v0.DistanceTo(v1)
-	opposite := math32.Abs(curPos.Y - newPos.Y)
-	angle := math32.RadToDeg(math32.Atan(opposite / adjacent))
-	logrus.Tracef("next pos angle is %f°\n", angle)
-	return math32.Abs(newPos.Y-curPos.Y) > 100
-}

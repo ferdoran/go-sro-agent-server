@@ -2,7 +2,7 @@ package manager
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/config"
-	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/spf13/viper"
 	"sync"
 	"time"
@@ -31,12 +31,12 @@ func GetGameTimeManagerInstance() *GameTimeManager {
 }
 
 func (gtm *GameTimeManager) moveObjects() {
-	world := model.GetSroWorldInstance()
+	world := service.GetWorldServiceInstance()
 	for gtm.started {
 		select {
 		case <-gtm.ticker.C:
 			for _, obj := range world.GetMovingObjects() {
-				if obj.UpdatePosition() {
+				if world.UpdatePosition(obj) {
 					world.RemoveMovingObject(obj.GetUniqueID())
 				}
 			}

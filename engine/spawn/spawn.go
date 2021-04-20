@@ -21,7 +21,7 @@ package spawn
 //const VisibleObjectRange = 1000
 //
 //type SpawnEngine struct {
-//	VisibleObjects map[uint32]map[uint32]model.ISRObject
+//	visibleObjects map[uint32]map[uint32]model.ISRObject
 //	mutex          *sync.Mutex
 //}
 //
@@ -31,7 +31,7 @@ package spawn
 //func GetSpawnEngineInstance() *SpawnEngine {
 //	spawnEngineOnce.Do(func() {
 //		spawnEngine = &SpawnEngine{
-//			VisibleObjects: make(map[uint32]map[uint32]model.ISRObject),
+//			visibleObjects: make(map[uint32]map[uint32]model.ISRObject),
 //			mutex:          &sync.Mutex{},
 //		}
 //	})
@@ -44,21 +44,21 @@ package spawn
 //	objsToDespawn := make([]uint32, 0)
 //	objsToSpawn := make([]uint32, 0)
 //
-//	if s.VisibleObjects[p.UniqueID] == nil {
-//		s.VisibleObjects[p.UniqueID] = make(map[uint32]model.ISRObject, 0)
+//	if s.visibleObjects[p.UniqueID] == nil {
+//		s.visibleObjects[p.UniqueID] = make(map[uint32]model.ISRObject, 0)
 //	}
 //
 //	// 1. despawn objects that are out of sight
 //
-//	for uid := range s.VisibleObjects[p.UniqueID] {
-//		obj := world.VisibleObjects[uid]
+//	for uid := range s.visibleObjects[p.UniqueID] {
+//		obj := world.visibleObjects[uid]
 //
 //		if obj.GetType() != model.PlayerType {
-//			delete(s.VisibleObjects[uid], p.UniqueID)
+//			delete(s.visibleObjects[uid], p.UniqueID)
 //			continue
 //		}
 //
-//		player := world.PlayersByUniqueId[uid]
+//		player := world.playersByUniqueId[uid]
 //
 //		if obj.GetPosition().DistanceTo(p.Position) > VisibleObjectRange {
 //			objsToDespawn = append(objsToDespawn, uid)
@@ -80,28 +80,28 @@ package spawn
 //			p3.MessageID = opcode.EntityGroupSpawnEnd
 //			player.Session.Conn.Write(p3.ToBytes())
 //
-//			delete(s.VisibleObjects[uid], p.UniqueID)
+//			delete(s.visibleObjects[uid], p.UniqueID)
 //		}
 //	}
 //
 //	// 2. spawn player to other players if visible
-//	for uid := range s.VisibleObjects {
+//	for uid := range s.visibleObjects {
 //
 //		if uid == p.UniqueID {
 //			continue
 //		}
 //
-//		//object := world.VisibleObjects[uid]
-//		player := world.PlayersByUniqueId[uid]
+//		//object := world.visibleObjects[uid]
+//		player := world.playersByUniqueId[uid]
 //
 //		if player.GetPosition().DistanceTo(p.Position) <= VisibleObjectRange {
 //
-//			if s.VisibleObjects[p.UniqueID][uid] == nil {
+//			if s.visibleObjects[p.UniqueID][uid] == nil {
 //				// in visible objects already
 //				objsToSpawn = append(objsToSpawn, uid)
 //			}
 //
-//			if s.VisibleObjects[uid][p.UniqueID] == nil {
+//			if s.visibleObjects[uid][p.UniqueID] == nil {
 //				p1 := network.EmptyPacket()
 //				p1.MessageID = opcode.EntityGroupSpawnBegin
 //				p1.WriteByte(1)
@@ -118,12 +118,12 @@ package spawn
 //				p3.MessageID = opcode.EntityGroupSpawnEnd
 //				player.Session.Conn.Write(p3.ToBytes())
 //
-//				s.VisibleObjects[uid][p.UniqueID] = p
+//				s.visibleObjects[uid][p.UniqueID] = p
 //			}
 //		}
 //
 //		//if object.GetPosition().DistanceTo(p.Position) <= VisibleObjectRange {
-//		//	if s.VisibleObjects[p.UniqueID][uid] == nil {
+//		//	if s.visibleObjects[p.UniqueID][uid] == nil {
 //		//		// in visible objects already
 //		//		objsToSpawn = append(objsToSpawn, uid)
 //		//	}
@@ -144,7 +144,7 @@ package spawn
 //			p2.MessageID = opcode.EntityGroupSpawnData
 //			p2.WriteUInt32(uid)
 //			p.Session.Conn.Write(p2.ToBytes())
-//			delete(s.VisibleObjects[p.UniqueID], uid)
+//			delete(s.visibleObjects[p.UniqueID], uid)
 //		}
 //
 //		p3 := network.EmptyPacket()
@@ -162,12 +162,12 @@ package spawn
 //		p.Session.Conn.Write(p1.ToBytes())
 //
 //		for _, uid := range objsToSpawn {
-//			player := world.PlayersByUniqueId[uid]
+//			player := world.playersByUniqueId[uid]
 //			p2 := network.EmptyPacket()
 //			p2.MessageID = opcode.EntityGroupSpawnData
 //			packetutils.WriteEntitySpawn(&p2, player)
 //			p.Session.Conn.Write(p2.ToBytes())
-//			s.VisibleObjects[p.UniqueID][uid] = player
+//			s.visibleObjects[p.UniqueID][uid] = player
 //		}
 //
 //		p3 := network.EmptyPacket()
@@ -180,7 +180,7 @@ package spawn
 //func (s *SpawnEngine) StartedMoving(p *model.Player, targetPos model.Position) {
 //	world := model.GetSroWorldInstance()
 //
-//	for uid, _ := range s.VisibleObjects[p.UniqueID] {
+//	for uid, _ := range s.visibleObjects[p.UniqueID] {
 //		packet := network.EmptyPacket()
 //		packet.MessageID = opcode.EntityMovementResponse
 //		packet.WriteUInt32(p.UniqueID)
@@ -194,7 +194,7 @@ package spawn
 //		packet.WriteUInt16(uint16(p.Position.X) * 10)
 //		packet.WriteFloat32(p.Position.Y)
 //		packet.WriteUInt16(uint16(p.Position.Z) * 10)
-//		player := world.PlayersByUniqueId[uid]
+//		player := world.playersByUniqueId[uid]
 //		player.Session.Conn.Write(packet.ToBytes())
 //	}
 //}
@@ -210,8 +210,8 @@ package spawn
 //	packet.WriteFloat32(p.Position.Z)
 //	packet.WriteUInt16(uint16(p.Position.Heading))
 //
-//	for uid, _ := range s.VisibleObjects[p.UniqueID] {
-//		player := world.PlayersByUniqueId[uid]
+//	for uid, _ := range s.visibleObjects[p.UniqueID] {
+//		player := world.playersByUniqueId[uid]
 //		player.Session.Conn.Write(packet.ToBytes())
 //	}
 //}
@@ -237,8 +237,8 @@ package spawn
 //	packet.WriteFloat32(p.GetWalkSpeed()) // WalkSpeed
 //	packet.WriteFloat32(p.GetRunSpeed())
 //
-//	for uid, _ := range s.VisibleObjects[p.UniqueID] {
-//		player := world.PlayersByUniqueId[uid]
+//	for uid, _ := range s.visibleObjects[p.UniqueID] {
+//		player := world.playersByUniqueId[uid]
 //		player.Session.Conn.Write(packet.ToBytes())
 //	}
 //}
@@ -258,15 +258,15 @@ package spawn
 //	p3 := network.EmptyPacket()
 //	p3.MessageID = opcode.EntityGroupSpawnEnd
 //
-//	for uid2, _ := range s.VisibleObjects[uid] {
-//		player := world.PlayersByUniqueId[uid2]
+//	for uid2, _ := range s.visibleObjects[uid] {
+//		player := world.playersByUniqueId[uid2]
 //		player.Session.Conn.Write(p1.ToBytes())
 //		player.Session.Conn.Write(p2.ToBytes())
 //		player.Session.Conn.Write(p3.ToBytes())
-//		delete(s.VisibleObjects[player.UniqueID], uid)
+//		delete(s.visibleObjects[player.UniqueID], uid)
 //	}
 //
-//	delete(s.VisibleObjects, uid)
+//	delete(s.visibleObjects, uid)
 //	world.PlayerDisconnected(uid, charName)
 //}
 //

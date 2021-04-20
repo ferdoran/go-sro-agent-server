@@ -1,16 +1,14 @@
 package model
 
 import (
-	"github.com/ferdoran/go-sro-agent-server/engine/geo"
+	"fmt"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/ferdoran/go-sro-framework/utils"
-	"github.com/g3n/engine/math32"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"sync"
-	"time"
 )
 
 const PlayerType = "Player"
@@ -121,7 +119,7 @@ type Player struct {
 	CTFTeam             CTFTeam
 	PVPCape             PVPCape
 	IsGm                bool
-	Party               Party
+	Party               *Party
 	WalkSpeed           float32
 	RunSpeed            float32
 	HwanSpeed           float32
@@ -307,153 +305,53 @@ func (p *Player) GetSession() *server.Session {
 	return p.Session
 }
 
-func (p *Player) UpdatePosition() bool {
-	// TODO implement
-	if p.MovementData == nil {
-		return true
-	}
-	currentTime := time.Now()
-	movementSpeed := p.GetMovementSpeed()
-	deltaTime := currentTime.Sub(p.MovementData.UpdateTime)
-
-	if deltaTime <= 0 {
-		// Position was just updated
-		return false
-	}
-
-	curPos := p.GetPosition()
-	curWorldX, _, curWorldZ := curPos.ToWorldCoordinates()
-	curWorldVec := math32.NewVector3(curWorldX, 0, curWorldZ)
-	var walkVector *math32.Vector3
-	nextPosIsTarget := false
-
-	if p.MovementData.HasDestination {
-		targetWorldX, _, targetWorldZ := p.MovementData.TargetPosition.ToWorldCoordinates()
-		targetWorldVec := math32.NewVector3(targetWorldX, 0, targetWorldZ)
-		walkVector = targetWorldVec.Clone().Sub(curWorldVec.Clone()).Normalize()
-	} else {
-		x := math32.Cos(math32.DegToRad(p.MovementData.DirectionAngle))
-		z := math32.Sin(math32.DegToRad(p.MovementData.DirectionAngle))
-
-		walkVector = math32.NewVector3(x, 0, z) // already normalized
-	}
-	nextPosVec := curWorldVec.Clone().Add(walkVector.MultiplyScalar(movementSpeed * float32(deltaTime.Seconds())))
-
-	newPos, err := NewPosFromWorldCoordinates(nextPosVec.X, nextPosVec.Z)
-
-	if err != nil {
-		logrus.Panic(errors.Wrap(err, "failed to calculate new player position"))
-	}
-
-	if p.MovementData.HasDestination && curPos.DistanceToSquared(newPos) >= curPos.DistanceToSquared(p.MovementData.TargetPosition) {
-		newPos = p.MovementData.TargetPosition
-		nextPosIsTarget = true
-	}
-
-	curCell := curPos.Region.GetCellAtOffset(curPos.X, curPos.Z)
-	newCell := newPos.Region.GetCellAtOffset(newPos.X, newPos.Z)
-	heading := math32.Atan2(walkVector.Z, walkVector.X)
-	newPos.Heading = heading
-
-	if curPos.Region.ID != newPos.Region.ID {
-		logrus.Tracef("new position is in new region (%d) -> (%d)\n", curPos.Region.ID, newPos.Region.ID)
-		if !curPos.Region.CanEnter(curCell, newCell) {
-			p.StopMovement()
-			logrus.Tracef("Cell collision between R(%d)[%d] and R(%d)[%d]\n", curCell.RegionID, curCell.ID, newCell.RegionID, newCell.ID)
-			return true
-		}
-	}
-	hasCollision, _, inObj, objPos := geo.FindCollisions(
-		math32.NewVector3(curPos.X, curPos.Y, curPos.Z),
-		math32.NewVector3(newPos.X, newPos.Y, newPos.Z),
-		curPos.Region.ID,
-		newPos.Region.ID,
-		curPos.Region.Objects,
-		newPos.Region.Objects)
-	if hasCollision {
-		p.StopMovement()
-		p.SendPositionUpdate()
-		return true
-	}
-
-	if inObj && objPos != nil && !geo.IsNextPositionTooHigh(curWorldVec, nextPosVec) {
-		newPos.Y = objPos.Y
-		logrus.Tracef("Changing position to obj position: %v", newPos)
-		objPos = nil
-	}
-
-	if curCell.ID != newCell.ID && !inObj {
-		logrus.Tracef("cell %d has %d objects\n", curCell.ID, curCell.ObjCount)
-		if !p.Position.Region.CanEnter(curCell, newCell) {
-			p.StopMovement()
-			logrus.Debugf("Cell collision between R(%d)[%d] and R(%d)[%d]\n", curCell.RegionID, curCell.ID, newCell.RegionID, newCell.ID)
-			return true
-		}
-	}
-	logrus.Tracef("setting new position to %v\n", newPos)
-	if diff := math32.Abs(p.GetPosition().Y - newPos.Y); diff > 10 {
-		logrus.Tracef("y-pos difference greater 10: %v\n", diff)
-	}
-	p.SetPosition(newPos)
-	if curPos.Region != nil && newPos.Region != nil && curPos.Region.ID != newPos.Region.ID {
-		curPos.Region.RemoveVisibleObject(p)
-		newPos.Region.AddVisibleObject(p)
-	}
-	if nextPosIsTarget {
-		p.StopMovement()
-		return true
-	}
-	p.MovementData.UpdateTime = currentTime
-	return false
-	// TODO
-}
-
-func (p *Player) MoveToPosition(newPosition Position) {
-	// TODO implement
-	currentTime := time.Now()
-	movementData := &MovementData{
-		StartTime:      currentTime,
-		UpdateTime:     currentTime,
-		TargetPosition: newPosition,
-		HasDestination: true,
-		DirectionAngle: 0,
-	}
-	pPos := p.GetPosition()
-	packet := network.EmptyPacket()
-	packet.MessageID = opcode.EntityMovementResponse
-	packet.WriteUInt32(p.UniqueID)
-	packet.WriteBool(movementData.HasDestination)
-	packet.WriteUInt16(uint16(movementData.TargetPosition.Region.ID))
-	packet.WriteUInt16(uint16(movementData.TargetPosition.X) + 0xFFFF)
-	packet.WriteUInt16(uint16(movementData.TargetPosition.Y))
-	packet.WriteUInt16(uint16(movementData.TargetPosition.Z) + 0xFFFF)
-	packet.WriteByte(1)
-	packet.WriteUInt16(uint16(pPos.Region.ID))
-	packet.WriteUInt16(uint16(pPos.X) * 10)
-	packet.WriteFloat32(pPos.Y)
-	packet.WriteUInt16(uint16(pPos.Z) * 10)
-
-	p.MovementData = movementData
-	p.SetMotionState(Running) // TODO check if walking or sitting
-	sroWorldInstance.RegisterMovingCharacter(p)
-	// Broadcast movement Update to known objects around
-
-	p.Broadcast(&packet)
-}
-
-func (p *Player) WalkToDirection(heading float32) {
-	currentTime := time.Now()
-	movementData := &MovementData{
-		StartTime:      currentTime,
-		UpdateTime:     currentTime,
-		HasDestination: false,
-		DirectionAngle: heading,
-	}
-
-	p.MovementData = movementData
-	p.SetMotionState(Running) // TODO check if walking or sitting
-	sroWorldInstance.RegisterMovingCharacter(p)
-}
+//
+//func (p *Player) MoveToPosition(newPosition Position) {
+//	// TODO implement
+//	currentTime := time.Now()
+//	movementData := &MovementData{
+//		StartTime:      currentTime,
+//		UpdateTime:     currentTime,
+//		TargetPosition: newPosition,
+//		HasDestination: true,
+//		DirectionAngle: 0,
+//	}
+//	pPos := p.GetPosition()
+//	packet := network.EmptyPacket()
+//	packet.MessageID = opcode.EntityMovementResponse
+//	packet.WriteUInt32(p.UniqueID)
+//	packet.WriteBool(movementData.HasDestination)
+//	packet.WriteUInt16(uint16(movementData.TargetPosition.Region.ID))
+//	packet.WriteUInt16(uint16(movementData.TargetPosition.X) + 0xFFFF)
+//	packet.WriteUInt16(uint16(movementData.TargetPosition.Y))
+//	packet.WriteUInt16(uint16(movementData.TargetPosition.Z) + 0xFFFF)
+//	packet.WriteByte(1)
+//	packet.WriteUInt16(uint16(pPos.Region.ID))
+//	packet.WriteUInt16(uint16(pPos.X) * 10)
+//	packet.WriteFloat32(pPos.Y)
+//	packet.WriteUInt16(uint16(pPos.Z) * 10)
+//
+//	p.MovementData = movementData
+//	p.SetMotionState(Running) // TODO check if walking or sitting
+//	service.GetWorldServiceInstance().RegisterMovingCharacter(p)
+//	// Broadcast movement Update to known objects around
+//
+//	p.Broadcast(&packet)
+//}
+//
+//func (p *Player) WalkToDirection(heading float32) {
+//	currentTime := time.Now()
+//	movementData := &MovementData{
+//		StartTime:      currentTime,
+//		UpdateTime:     currentTime,
+//		HasDestination: false,
+//		DirectionAngle: heading,
+//	}
+//
+//	p.MovementData = movementData
+//	p.SetMotionState(Running) // TODO check if walking or sitting
+//	service.GetWorldServiceInstance().RegisterMovingCharacter(p)
+//}
 
 func (p *Player) Broadcast(packet *network.Packet) {
 	packetBuffer := packet.ToBytes()
@@ -510,4 +408,39 @@ func (p *Player) GetType() string {
 
 func (p *Player) GetMovementData() *MovementData {
 	return p.MovementData
+}
+
+func (p *Player) HasParty() bool {
+	p.RWMutex.RLock()
+	defer p.RWMutex.RUnlock()
+
+	return p.Party != nil
+}
+
+func (p *Player) AddToParty(party *Party) error {
+	if p.HasParty() {
+		return errors.New(fmt.Sprintf("player is already member of party %d", party.Number))
+	}
+
+	p.RWMutex.Lock()
+	defer p.RWMutex.Unlock()
+	p.Party = party
+
+	return nil
+}
+
+func (p *Player) GetParty() *Party {
+	p.RWMutex.RLock()
+	defer p.RWMutex.RUnlock()
+
+	return p.Party
+}
+
+func (p *Player) RemoveFromParty() {
+	if p.HasParty() {
+		p.RWMutex.Lock()
+		defer p.RWMutex.Unlock()
+
+		p.Party = nil
+	}
 }

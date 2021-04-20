@@ -241,40 +241,6 @@ func (r *Region) CalculateObjectMatrices() {
 	r.InternalEdgeFlags = internalEdgeFlags
 }
 
-func (r *Region) GetNeighbourRegions() []*Region {
-	regions := make([]*Region, 0)
-	x, z := utils.Int16ToXAndZ(r.ID)
-	world := GetSroWorldInstance()
-
-	for x1 := x - 1; x1 <= x+1; x1++ {
-		for z1 := z - 1; z1 <= z+1; z1++ {
-			if reg, _ := world.GetRegion(utils.XAndZToInt16(byte(x1), byte(z1))); reg != nil {
-				regions = append(regions, reg)
-			}
-		}
-	}
-	return regions
-}
-
-func (r *Region) GetKnownObjectsAroundObject(object ISRObject) map[uint32]ISRObject {
-	regions := r.GetNeighbourRegions()
-	knownObjects := make(map[uint32]ISRObject)
-	for _, reg := range regions {
-		for _, otherObject := range reg.GetVisibleObjects() {
-			if object.GetUniqueID() == otherObject.GetUniqueID() {
-				continue
-			}
-
-			if object.GetPosition().DistanceTo(otherObject.GetPosition()) <= 900 {
-				// TODO What about stealth / invisible characters?
-				knownObjects[otherObject.GetUniqueID()] = otherObject
-			}
-		}
-
-	}
-	return knownObjects
-}
-
 func (r *Region) AddVisibleObject(object ISRObject) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

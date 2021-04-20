@@ -124,3 +124,15 @@ func (n *NPC) SetHwanSpeed(speed float32) {
 	defer n.Mutex.Unlock()
 	n.HwanSpeed = speed
 }
+
+func (n *NPC) GetMovementSpeed() float32 {
+	return n.GetRunSpeed()
+}
+
+func (n *NPC) StopMovement() {
+	// TODO implement
+}
+
+func (n *NPC) SendPositionUpdate() {
+	// TODO not required
+}

@@ -15,8 +15,9 @@ type ICharacter interface {
 	GetHwanSpeed() float32
 	SetHwanSpeed(speed float32)
 	SetName(name string)
-	MoveToPosition(position Position)
-	UpdatePosition() bool
+	GetMovementSpeed() float32
+	StopMovement()
+	SendPositionUpdate()
 }
 
 //func (c *Character) GetLifeState() LifeState {

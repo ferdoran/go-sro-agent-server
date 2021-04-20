@@ -12,6 +12,7 @@ import (
 	"github.com/ferdoran/go-sro-agent-server/handler/stall"
 	"github.com/ferdoran/go-sro-agent-server/manager"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/boot"
 	"github.com/ferdoran/go-sro-framework/logging"
 	"github.com/ferdoran/go-sro-framework/network"
@@ -110,7 +111,7 @@ func (a *AgentServer) handlePackets() {
 				//delete(a.AuthRequestHandler.Tokens, closedSession.UserContext.Username)
 				//delete(a.CreateLoginTokenHandler.Tokens, closedSession.UserContext.Username)
 				delete(a.Server.Sessions, closedSession.ID)
-				world := model.GetSroWorldInstance()
+				world := service.GetWorldServiceInstance()
 				world.PlayerDisconnected(closedSession.UserContext.UniqueID, closedSession.UserContext.CharName)
 			}
 
@@ -179,7 +180,7 @@ func main() {
 	boot.RegisterComponent("gamedata", loadGameData, 1)
 
 	setupWorld := func() {
-		world := model.InitSroWorldInstance(viper.GetString(config.AgentDataPath), viper.GetString(config.AgentPrelinkedNavdataFile))
+		world := service.GetWorldServiceInstance()
 		world.LoadGameServerRegions(1)
 	}
 
