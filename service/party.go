@@ -130,8 +130,8 @@ func (p *PartyService) GetFormedParties(playerUniqueId uint32, page byte) []*mod
 		formedParties = append(formedParties, formedParty)
 	}
 
-	minIndex := (page - 1) * PartiesPerPage
-	maxIndex := page * PartiesPerPage
+	minIndex := page * PartiesPerPage
+	maxIndex := (page + 1) * PartiesPerPage
 
 	if len(formedParties) == 0 {
 		return formedParties
@@ -142,7 +142,7 @@ func (p *PartyService) GetFormedParties(playerUniqueId uint32, page byte) []*mod
 	}
 
 	if int(maxIndex) >= len(formedParties) {
-		maxIndex = byte(len(formedParties) - 1)
+		maxIndex = byte(len(formedParties))
 	}
 
 	player, err := worldServiceInstance.GetPlayerByUniqueId(playerUniqueId)
@@ -155,7 +155,6 @@ func (p *PartyService) GetFormedParties(playerUniqueId uint32, page byte) []*mod
 	if player.HasParty() {
 		parties = append([]*model.Party{player.GetParty()}, parties...)
 	}
-
 	return parties[minIndex:maxIndex]
 }
 
