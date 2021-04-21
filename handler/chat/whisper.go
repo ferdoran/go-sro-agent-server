@@ -1,16 +1,21 @@
 package chat
 
 import (
-	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 func handleWhisperMessage(request MessageRequest, session *server.Session) {
-	world := model.GetSroWorldInstance()
-	receivingPlayer := world.PlayersByCharName[request.Receiver]
+	world := service.GetWorldServiceInstance()
+	receivingPlayer, err := world.GetPlayerByCharName(request.Receiver)
+	if err != nil {
+		logrus.Error(errors.Wrap(err, "failed to send private message"))
+		return
+	}
 	p := network.EmptyPacket()
 	p.MessageID = opcode.ChatResponse
 

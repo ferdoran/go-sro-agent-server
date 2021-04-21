@@ -2,6 +2,7 @@ package manager
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/sirupsen/logrus"
@@ -21,14 +22,14 @@ func GetSpawnManagerInstance() *SpawnManager {
 		spawnManagerInstance = &SpawnManager{}
 		spawnManagerInstance.Name = "SpawnManager"
 		spawnManagerInstance.initialDelay = time.Second
-		spawnManagerInstance.rate = time.Second
+		spawnManagerInstance.rate = time.Millisecond * 100
 		spawnManagerInstance.runnerFunc = spawnManagerInstance.updateSpawns
 	})
 	return spawnManagerInstance
 }
 
 func (s *SpawnManager) updateSpawns() {
-	world := model.GetSroWorldInstance()
+	world := service.GetWorldServiceInstance()
 	for s.started {
 		select {
 		case <-s.ticker.C:

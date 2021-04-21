@@ -3,9 +3,11 @@ package chat
 import (
 	"fmt"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"regexp"
 	"strconv"
@@ -37,6 +39,7 @@ func GetGmMessageHandlerInstance() *GmMessageHandler {
 }
 
 func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *server.Session) {
+	world := service.GetWorldServiceInstance()
 	if adminCommandRegex.MatchString(request.Message) {
 		strComponents := adminCommandRegex.FindStringSubmatch(request.Message)
 		command := strComponents[1]
@@ -44,8 +47,12 @@ func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *s
 		logrus.Debugf("[GM] - gm command %v with args %v\n", command, args)
 		switch command {
 		case SetSpeed:
-			world := model.GetSroWorldInstance()
-			player := world.PlayersByUniqueId[session.UserContext.UniqueID]
+
+			player, err := world.GetPlayerByUniqueId(session.UserContext.UniqueID)
+			if err != nil {
+				logrus.Error(errors.Wrap(err, "failed to set speed"))
+				return
+			}
 			newSpeed, err := strconv.ParseFloat(args, 32)
 			if err != nil {
 				// TODO send message back
@@ -79,8 +86,10 @@ func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *s
 				logrus.SetLevel(logrus.InfoLevel)
 			}
 		case CurrentPosition:
-			world := model.GetSroWorldInstance()
-			player := world.PlayersByUniqueId[session.UserContext.UniqueID]
+			player, err := world.GetPlayerByUniqueId(session.UserContext.UniqueID)
+			if err != nil {
+				logrus.Error(errors.Wrap(err, "failed to retrieve current player position"))
+			}
 			p := network.EmptyPacket()
 			p.MessageID = opcode.ChatUpdate
 			p.WriteByte(PM)
@@ -111,15 +120,12 @@ func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *s
 		}
 	} else {
 		// TODO: Change all players to local region
-		players := model.GetSroWorldInstance().PlayersByUniqueId
-		for _, v := range players {
-			p := network.EmptyPacket()
-			p.MessageID = opcode.ChatUpdate
-			p.WriteByte(request.ChatType)
-			p.WriteUInt32(session.UserContext.UniqueID)
-			p.WriteString(request.Message)
-			v.Session.Conn.Write(p.ToBytes())
-		}
+		p := network.EmptyPacket()
+		p.MessageID = opcode.ChatUpdate
+		p.WriteByte(request.ChatType)
+		p.WriteUInt32(session.UserContext.UniqueID)
+		p.WriteString(request.Message)
+		world.BroadcastRaw(p.ToBytes())
 
 		p1 := network.EmptyPacket()
 		p1.MessageID = opcode.ChatResponse
@@ -131,9 +137,12 @@ func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *s
 }
 
 func warpPlayer(playerUniqueId uint32, x, y, z float32, regionId int16) {
-	world := model.GetSroWorldInstance()
-	player := world.PlayersByUniqueId[playerUniqueId]
-
+	world := service.GetWorldServiceInstance()
+	player, err := world.GetPlayerByUniqueId(playerUniqueId)
+	if err != nil {
+		logrus.Error(errors.Wrap(err, "failed to warp player"))
+		return
+	}
 	region, err := world.GetRegion(regionId)
 
 	if err != nil {

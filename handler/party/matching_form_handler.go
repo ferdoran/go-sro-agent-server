@@ -2,11 +2,11 @@ package party
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
 	log "github.com/sirupsen/logrus"
-	"sync"
 )
 
 type PartyMatchingFormHandler struct {
@@ -56,7 +56,7 @@ func (h *PartyMatchingFormHandler) Handle() {
 			log.Panicln("Failed to read title")
 		}
 
-		party := model.Party{
+		party := model.PartyFormRequest{
 			MasterJID:         data.UserContext.UserID,
 			MasterUniqueID:    data.UserContext.UniqueID,
 			MasterName:        data.UserContext.CharName,
@@ -66,10 +66,10 @@ func (h *PartyMatchingFormHandler) Handle() {
 			LevelMin:          levelMin,
 			LevelMax:          levelMax,
 			Title:             title,
-			Mutex:             &sync.Mutex{},
 		}
 
-		partyNumber := party.FormParty(data.UserContext.UniqueID)
+		partyService := service.GetPartyServiceInstance()
+		partyNumber := partyService.FormParty(party)
 
 		// TODO Add check for existing party
 		p := network.EmptyPacket()

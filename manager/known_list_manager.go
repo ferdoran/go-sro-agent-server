@@ -1,7 +1,7 @@
 package manager
 
 import (
-	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"sync"
 	"time"
 )
@@ -32,14 +32,13 @@ func GetKnownListManager() *KnownListManager {
 }
 
 func (k *KnownListManager) updateKnownLists() {
-	world := model.GetSroWorldInstance()
+	world := service.GetWorldServiceInstance()
 	for k.started {
 		select {
 		case <-k.ticker.C:
 			for _, region := range world.GetRegions() {
 				for _, object := range region.GetVisibleObjects() {
-
-					knownObjects := region.GetKnownObjectsAroundObject(object)
+					knownObjects := world.GetKnownObjectsAroundObject(region, object)
 					knownObjectsList := object.GetKnownObjectList()
 
 					// Remove unknown objects first

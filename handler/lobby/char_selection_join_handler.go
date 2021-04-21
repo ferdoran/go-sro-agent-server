@@ -3,6 +3,7 @@ package lobby
 import (
 	"github.com/ferdoran/go-sro-agent-server/engine/environment"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
@@ -69,7 +70,7 @@ func (h *CharSelectionJoinRequestHandler) Handle() {
 		data.Conn.Write(pJoinResponse.ToBytes())
 
 		player := h.LoadPlayerData(charName, data.Session)
-		world := model.GetSroWorldInstance()
+		world := service.GetWorldServiceInstance()
 		world.AddPlayer(player)
 		player.LifeState = model.Spawning
 		player.BodyState = model.NoStatus
@@ -210,7 +211,7 @@ func (h *CharSelectionJoinRequestHandler) Handle() {
 
 func (h *CharSelectionJoinRequestHandler) LoadPlayerData(charName string, session *server.Session) *model.Player {
 	char := model.GetCharacterByName(charName)
-	world := model.GetSroWorldInstance()
+	world := service.GetWorldServiceInstance()
 	angle := rand.Int() % 0xFFFF
 	player := &model.Player{
 		Session:   session,

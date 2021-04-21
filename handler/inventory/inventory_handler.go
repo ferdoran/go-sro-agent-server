@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
@@ -99,9 +100,9 @@ func moveItem(data server.PacketChannelData) {
 		return
 	}
 
-	world := model.GetSroWorldInstance()
-	player := world.PlayersByCharName[data.Session.UserContext.CharName]
-	if player == nil {
+	world := service.GetWorldServiceInstance()
+	player, err := world.GetPlayerByCharName(data.Session.UserContext.CharName)
+	if err == nil {
 		// player not online
 		logrus.Tracef("Player %s is not online\n", player.CharName)
 		return

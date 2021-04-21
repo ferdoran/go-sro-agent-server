@@ -2,9 +2,11 @@ package stall
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"sync"
 )
@@ -46,8 +48,11 @@ func addRemoveItem(data server.PacketChannelData, updateType byte) {
 		playerStall = stallEntry.RemoveItem(data.UserContext.UniqueID)
 	}
 
-	playerInventoryItems := model.GetSroWorldInstance().PlayersByUniqueId[data.UserContext.UniqueID].Inventory.Items
-
+	player, err := service.GetWorldServiceInstance().GetPlayerByUniqueId(data.UserContext.UniqueID)
+	if err != nil {
+		log.Error(errors.Wrap(err, "failed to add or remove item"))
+	}
+	playerInventoryItems := player.Inventory.Items
 	p := network.EmptyPacket()
 	p.MessageID = opcode.StallUpdateResponse
 	p.WriteByte(1)

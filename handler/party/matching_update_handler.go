@@ -2,6 +2,7 @@ package party
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
@@ -19,6 +20,7 @@ func InitPartyMatchingUpdateHandler() {
 }
 
 func (h *PartyMatchingUpdateHandler) Handle() {
+	partyService := service.GetPartyServiceInstance()
 	for {
 		data := <-h.channel
 		partyNumber, err := data.ReadUInt32()
@@ -57,8 +59,10 @@ func (h *PartyMatchingUpdateHandler) Handle() {
 		}
 
 		party := model.Party{
+			Number:            partyNumber,
 			MasterJID:         data.UserContext.UserID,
 			MasterName:        data.UserContext.CharName,
+			MasterUniqueID:    data.UserContext.UniqueID,
 			CountryType:       0, // TODO: Figure out
 			PartySettingsFlag: model.PartySetting(partySetting),
 			PurposeType:       model.PartyPurpose(purposeType),
@@ -68,7 +72,7 @@ func (h *PartyMatchingUpdateHandler) Handle() {
 			Mutex:             &sync.Mutex{},
 		}
 
-		party.UpdateParty(data.UserContext.UniqueID)
+		partyService.UpdateParty(party)
 
 		p := network.EmptyPacket()
 		p.MessageID = opcode.PartyMatchingUpdateResponse
