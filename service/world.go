@@ -62,6 +62,22 @@ func (w *WorldService) GetPlayerByUniqueId(playerUniqueId uint32) (*model.Player
 	}
 }
 
+func (w *WorldService) GetNPCByUniqueId(npcUniqueId uint32) (*model.NPC, error) {
+	if npc, exists := w.npcsByUniqueId[npcUniqueId]; exists {
+		return npc, nil
+	} else {
+		return nil, errors.New(fmt.Sprintf("NPC with uniqueId %d does not exist", npcUniqueId))
+	}
+}
+
+func (w *WorldService) GetVisibleObjectByUniqueId(visibleObjectUniqueId uint32) (model.ISRObject, error) {
+	if obj, exists := w.visibleObjects[visibleObjectUniqueId]; exists {
+		return obj, nil
+	} else {
+		return nil, errors.New(fmt.Sprintf("Visible object with uniqueId %d does not exist", visibleObjectUniqueId))
+	}
+}
+
 func (w *WorldService) AddPlayer(p *model.Player) {
 	// TODO probably do more checks
 	// TODO add visible objects that player can see

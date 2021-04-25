@@ -10,6 +10,7 @@ import (
 	"github.com/ferdoran/go-sro-agent-server/handler/logout"
 	"github.com/ferdoran/go-sro-agent-server/handler/party"
 	"github.com/ferdoran/go-sro-agent-server/handler/stall"
+	"github.com/ferdoran/go-sro-agent-server/handler/entity_select"
 	"github.com/ferdoran/go-sro-agent-server/manager"
 	"github.com/ferdoran/go-sro-agent-server/model"
 	"github.com/ferdoran/go-sro-agent-server/service"
@@ -83,6 +84,7 @@ func NewAgentServer() AgentServer {
 	boot.RegisterComponent("packethandler", party.InitPartyMatchingJoinRequestHandler, 2)
 	boot.RegisterComponent("packethandler", party.InitPartyMatchingPlayerJoinRequestHandler, 2)
 	boot.RegisterComponent("packethandler", party.InitPartyKickHandler, 2)
+	boot.RegisterComponent("packethandler", entity_select.InitEntitySelectHandler, 2)
 
 	return agentServer
 }
