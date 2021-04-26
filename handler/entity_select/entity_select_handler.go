@@ -19,45 +19,47 @@ func InitEntitySelectHandler() {
 }
 
 func (h *EntitySelectHandler) Handle() {
-	data := <-h.channel
+	for {
+		data := <-h.channel
 
-	entityUniqueId, err := data.ReadUInt32()
-	if err != nil {
-		log.Panicln("Failed to read entityUniqueId")
-	}
-
-	entity := model.EntitySelectRequest {
-		EntityUniqueID: entityUniqueId,
-	}
-
-	entitySelectService := service.EntitySelectService{}
-	entitySelectErr := entitySelectService.GetEntity(entity)
-	if entitySelectErr != nil {
-		log.Panicln(entitySelectErr)
-	} else {
-		p := network.EmptyPacket()
-		p.MessageID = opcode.EntitySelectResponse
-		p.WriteByte(1)               	// Result
-		p.WriteUInt32(entityUniqueId)	// UniqueID from the request
-		if entitySelectService.IsPlayerCharacter {
-			p.WriteByte(1)               	// 
-			p.WriteByte(5)               	// 
-			p.WriteByte(4)               	// 
-		} else if entitySelectService.IsNPCNpc {
-			p.WriteByte(1)   				// Blacksmith JG hardcoded now
-			p.WriteByte(4)   				// 
-			p.WriteByte(1)   				// 
-			p.WriteByte(2)   				// 
-			p.WriteByte(4)   				// 
-			p.WriteByte(20)  				// 
-			p.WriteByte(1)   				// 
-			p.WriteUInt16(0) 				// 
-		} else if entitySelectService.IsNPCMob {
-			p.WriteByte(1)    				// Mangyang & Weasel values
-			p.WriteUInt32(36) 				// 
-			p.WriteByte(1)    				// 
-			p.WriteByte(5)    				// 
+		entityUniqueId, err := data.ReadUInt32()
+		if err != nil {
+			log.Panicln("Failed to read entityUniqueId")
 		}
-		data.Session.Conn.Write(p.ToBytes())
+
+		entity := model.EntitySelectRequest {
+			EntityUniqueID: entityUniqueId,
+		}
+
+		entitySelectService := service.EntitySelectService{}
+		entitySelectErr := entitySelectService.GetEntity(entity)
+		if entitySelectErr != nil {
+			log.Warnln(entitySelectErr)
+		} else {
+			p := network.EmptyPacket()
+			p.MessageID = opcode.EntitySelectResponse
+			p.WriteByte(1)               	// Result
+			p.WriteUInt32(entityUniqueId)	// UniqueID from the request
+			if entitySelectService.IsPlayerCharacter {
+				p.WriteByte(1)               	// 
+				p.WriteByte(5)               	// 
+				p.WriteByte(4)               	// 
+			} else if entitySelectService.IsNPCNpc {
+				p.WriteByte(1)   				// Blacksmith JG hardcoded now
+				p.WriteByte(4)   				// 
+				p.WriteByte(1)   				// 
+				p.WriteByte(2)   				// 
+				p.WriteByte(4)   				// 
+				p.WriteByte(20)  				// 
+				p.WriteByte(1)   				// 
+				p.WriteUInt16(0) 				// 
+			} else if entitySelectService.IsNPCMob {
+				p.WriteByte(1)    				// Mangyang & Weasel values
+				p.WriteUInt32(36) 				// 
+				p.WriteByte(1)    				// 
+				p.WriteByte(5)    				// 
+			}
+			data.Session.Conn.Write(p.ToBytes())
+		}
 	}
 }
