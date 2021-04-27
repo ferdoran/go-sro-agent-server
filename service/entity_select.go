@@ -44,7 +44,7 @@ func (p *EntitySelectService) GetEntity(entitySelectRequest model.EntitySelectRe
 		p.IsPlayerCharacter = isPlayerCharacter
 		p.IsNPCNpc          = isNPCNpc
 		p.IsNPCMob          = isNPCMob
-		log.Debugf("Visible obj:\n%#v\n", p)
+		log.Debugf("Visible obj:\n%#v\n", visibleObject)
 		return nil
 	}
 }

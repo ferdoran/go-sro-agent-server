@@ -30,9 +30,9 @@ func (h *EntitySelectHandler) Handle() {
 		entity := model.EntitySelectRequest {
 			EntityUniqueID: entityUniqueId,
 		}
-
 		entitySelectService := service.EntitySelectService{}
-		entitySelectErr := entitySelectService.GetEntity(entity)
+		entitySelectErr     := entitySelectService.GetEntity(entity)
+		
 		if entitySelectErr != nil {
 			log.Warnln(entitySelectErr)
 		} else {

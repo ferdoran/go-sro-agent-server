@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/ferdoran/go-sro-fileutils v0.0.0-20201215213848-71bb43224391
-	github.com/ferdoran/go-sro-framework v1.3.4
+	github.com/ferdoran/go-sro-framework v1.3.6
 	github.com/ferdoran/go-sro-gateway-server v1.3.0
 	github.com/g3n/engine v0.1.0
 	github.com/pkg/errors v0.9.1

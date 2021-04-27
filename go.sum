@@ -72,6 +72,10 @@ github.com/ferdoran/go-sro-framework v1.3.3 h1:cRNnPX57iE38KERY2MBG36TPfLvNWonpP
 github.com/ferdoran/go-sro-framework v1.3.3/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
 github.com/ferdoran/go-sro-framework v1.3.4 h1:RjlNAUwDn0CDXj0B2VeOvjpKo2CXHiCnrd9UjxrQxdM=
 github.com/ferdoran/go-sro-framework v1.3.4/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
+github.com/ferdoran/go-sro-framework v1.3.5 h1:ygcYUSPHkIp8HGGe+3hZfhYHK0PJQFi2hlHoboWl1VA=
+github.com/ferdoran/go-sro-framework v1.3.5/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
+github.com/ferdoran/go-sro-framework v1.3.6 h1:nRJBlyw8RDv0+T3jql6xU8tlL0DV8mRUCVm3SD6LFxQ=
+github.com/ferdoran/go-sro-framework v1.3.6/go.mod h1:1TG5q7qJSyDgejW6PEQOavis+L86OCGnBAbl/6Gt6EU=
 github.com/ferdoran/go-sro-gateway-server v1.3.0 h1:xPLdBdMiPFZT2cIowgXWcEFGiHClnPMyROZ+nx81Wtg=
 github.com/ferdoran/go-sro-gateway-server v1.3.0/go.mod h1:MEv45W2mclpSItf+GiC+kKu2b49z6XI3H+PYy6oue3A=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
