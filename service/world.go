@@ -5,7 +5,7 @@ import (
 	"github.com/ferdoran/go-sro-agent-server/config"
 	"github.com/ferdoran/go-sro-agent-server/engine/geo"
 	"github.com/ferdoran/go-sro-agent-server/model"
-	"github.com/ferdoran/go-sro-fileutils/navmesh"
+	"github.com/ferdoran/go-sro-agent-server/navmesh"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"

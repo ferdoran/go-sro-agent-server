@@ -2,7 +2,7 @@ package model
 
 import (
 	"github.com/ferdoran/go-sro-agent-server/engine/geo/math"
-	"github.com/ferdoran/go-sro-fileutils/navmesh"
+	"github.com/ferdoran/go-sro-agent-server/navmesh"
 	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"
 	"github.com/sirupsen/logrus"
