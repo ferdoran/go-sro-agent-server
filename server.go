@@ -131,7 +131,7 @@ func (a *AgentServer) handlePackets() {
 				log.Debugf("Stall Talk Request not handled")
 
 			default:
-				a.UnhandledPacketsLogger.Printf("Unhandled packet %+v\n", data.Packet)
+				a.UnhandledPacketsLogger.Printf("Unhandled packet %+v\n", data.Packet.String())
 			}
 		}
 	}
@@ -188,7 +188,7 @@ func main() {
 
 	startServices := func() {
 		manager.GetGameTimeManagerInstance().Start()
-		manager.GetKnownListManager().Start()
+		//manager.GetKnownListManager().Start()
 		manager.GetSpawnManagerInstance().Start()
 		manager.GetRespawnManagerInstance().Start()
 	}

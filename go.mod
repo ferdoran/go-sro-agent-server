@@ -3,10 +3,13 @@ module github.com/ferdoran/go-sro-agent-server
 go 1.15
 
 require (
-	github.com/ferdoran/go-sro-fileutils v0.0.0-20201215213848-71bb43224391
-	github.com/ferdoran/go-sro-framework v1.4.3
+	github.com/ferdoran/go-sro-framework v1.4.4
 	github.com/ferdoran/go-sro-gateway-server v1.3.0
+	github.com/fogleman/gg v1.3.0
 	github.com/g3n/engine v0.1.0
+	github.com/gizak/termui/v3 v3.1.0
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
+	github.com/gotk3/gotk3 v0.6.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/viper v1.7.1

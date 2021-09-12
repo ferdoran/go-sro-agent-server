@@ -39,6 +39,28 @@ func (gtm *GameTimeManager) moveObjects() {
 				if world.UpdatePosition(obj) {
 					world.RemoveMovingObject(obj.GetUniqueID())
 				}
+
+				// update known object list when position has changed
+				knownObjects := world.GetKnownObjectsAroundObject(obj.GetPosition().Region, obj)
+				knownObjectsList := obj.GetKnownObjectList()
+
+				// Remove unknown objects first
+				// TODO: shouldn't it be removed from the unknownObj too?
+				for uid, unknownObj := range knownObjectsList.GetKnownObjects() {
+					if knownObjects[uid] == nil {
+						knownObjectsList.RemoveObject(unknownObj)
+						unknownObj.GetKnownObjectList().RemoveObject(obj)
+					}
+				}
+
+				// Add new objects
+				// TODO: shouldn't it be added to the new objects known list too?
+				for _, knownObj := range knownObjects {
+					if !knownObjectsList.Knows(knownObj) {
+						knownObjectsList.AddObject(knownObj)
+						knownObj.GetKnownObjectList().AddObject(obj)
+					}
+				}
 			}
 		}
 	}

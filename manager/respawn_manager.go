@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"github.com/ferdoran/go-sro-agent-server/model"
 	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/pkg/errors"
@@ -65,7 +66,7 @@ func spawnNpc(s *model.SpawnArea) {
 		Type:  "NPC",
 		Mutex: &sync.Mutex{},
 	}
-	npc.Position = generateRandomPositionInRadius(s)
+	npc.Position = generateRandomPositionInRadius(s, 0)
 	npc.KnownObjectList = model.NewKnownObjectList(npc)
 	npc.Name = s.NpcCodeName
 	npc.RefObjectID = uint32(s.RefObjID)
@@ -79,7 +80,7 @@ func spawnNpc(s *model.SpawnArea) {
 	s.NPCs[npc.GetUniqueID()] = npc
 }
 
-func generateRandomPositionInRadius(s *model.SpawnArea) model.Position {
+func generateRandomPositionInRadius(s *model.SpawnArea, retryCount int) model.Position {
 	xWorld, _, zWorld := s.Position.ToWorldCoordinatesInt32()
 
 	var spawnXWorld, spawnZWorld int32
@@ -111,8 +112,8 @@ func generateRandomPositionInRadius(s *model.SpawnArea) model.Position {
 	newPos, err := service.GetWorldServiceInstance().NewPosFromWorldCoordinates(float32(spawnXWorld), float32(spawnZWorld))
 	newPos.Y = s.Position.Y
 	if err != nil {
-		newPos = s.Position
-		logrus.Warn(errors.Wrap(err, "failed to generate random position for mob spawn near "+s.Position.String()))
+		logrus.Warn(errors.Wrap(err, fmt.Sprintf("failed to generate random position (%d times), for mob spawn near %s", retryCount, s.Position.String())))
+		return generateRandomPositionInRadius(s, retryCount+1)
 	}
 
 	return newPos

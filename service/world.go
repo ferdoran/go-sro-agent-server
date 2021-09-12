@@ -158,7 +158,7 @@ func (w *WorldService) GetRegion(regionId int16) (*model.Region, error) {
 	if reg, exists := w.regions[regionId]; exists {
 		return reg, nil
 	}
-	return nil, errors.New("region does not exist: " + string(regionId))
+	return nil, errors.New(fmt.Sprintf("region does not exist: %d", regionId))
 }
 
 func (w *WorldService) GetRegions() map[int16]*model.Region {
@@ -208,7 +208,13 @@ func (w *WorldService) RegisterMovingCharacter(char model.ICharacter) {
 func (w *WorldService) GetMovingObjects() map[uint32]model.ICharacter {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
-	return w.movingObjects
+
+	newMap := make(map[uint32]model.ICharacter)
+
+	for k, v := range w.movingObjects {
+		newMap[k] = v
+	}
+	return newMap
 }
 
 func (w *WorldService) RemoveMovingObject(uid uint32) {
@@ -275,7 +281,7 @@ func (w *WorldService) GetKnownObjectsAroundObject(region *model.Region, object 
 				continue
 			}
 
-			if w.DistanceTo(object.GetPosition(), otherObject.GetPosition()) <= model.RegionHeight/2 {
+			if w.DistanceTo(object.GetPosition(), otherObject.GetPosition()) <= model.RegionHeight/3 {
 				// TODO What about stealth / invisible characters?
 				knownObjects[otherObject.GetUniqueID()] = otherObject
 			}

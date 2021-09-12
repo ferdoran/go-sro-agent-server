@@ -31,6 +31,7 @@ func NewLoader(dataPk2Path string) *Loader {
 		NavMeshPath:    "Data" + string(os.PathSeparator) + "navmesh",
 		MapProjectInfo: MapProjectInfo{},
 		ObjectInfo:     ObjectInfo{},
+		NavMeshData:    make(map[string]NavMeshData),
 	}
 }
 
