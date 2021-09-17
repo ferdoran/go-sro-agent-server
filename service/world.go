@@ -54,6 +54,14 @@ func GetWorldServiceInstance() *WorldService {
 	return worldServiceInstance
 }
 
+func (w *WorldService) GetObjectByUniqueId(objectUniqueId uint32) (model.ISRObject, error) {
+	if player, exists := w.visibleObjects[objectUniqueId]; exists {
+		return player, nil
+	} else {
+		return nil, errors.New(fmt.Sprintf("object with uniqueId %d does not exist", objectUniqueId))
+	}
+}
+
 func (w *WorldService) GetPlayerByUniqueId(playerUniqueId uint32) (*model.Player, error) {
 	if player, exists := w.playersByUniqueId[playerUniqueId]; exists {
 		return player, nil
