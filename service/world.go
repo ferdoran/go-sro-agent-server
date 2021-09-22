@@ -6,6 +6,7 @@ import (
 	"github.com/ferdoran/go-sro-agent-server/engine/geo"
 	"github.com/ferdoran/go-sro-agent-server/model"
 	"github.com/ferdoran/go-sro-agent-server/navmesh"
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/utils"
 	"github.com/g3n/engine/math32"
@@ -28,6 +29,7 @@ type WorldService struct {
 	uniqueIdCounter   uint32
 	mutex             *sync.Mutex
 	loader            *navmesh.Loader
+	loader2           *navmeshv2.Loader
 	navmeshGobPath    string
 }
 
@@ -47,6 +49,7 @@ func GetWorldServiceInstance() *WorldService {
 			uniqueIdCounter:   0,
 			mutex:             &sync.Mutex{},
 			loader:            navmesh.NewLoader(viper.GetString(config.AgentDataPath)),
+			loader2:           navmeshv2.NewLoader(viper.GetString(config.AgentDataPath)),
 			navmeshGobPath:    viper.GetString(config.AgentPrelinkedNavdataFile),
 		}
 	})
@@ -113,7 +116,9 @@ func (w *WorldService) LoadGameServerRegions(gameServerId int) map[int16]*model.
 	if os.IsNotExist(err) {
 		log.Infof("prelinked navdata file does not exist. loading from data then")
 		w.loader.LoadNavMeshInfos()
+		//w.loader2.LoadNavMeshInfos()
 		w.loader.LoadNavMeshData()
+		//w.loader2.LoadTerrainMeshes()
 	} else {
 		log.Infof("loading prelinked navdata file")
 		w.loader.LoadPrecomputedNavmeshDataFromGOB(w.navmeshGobPath)
