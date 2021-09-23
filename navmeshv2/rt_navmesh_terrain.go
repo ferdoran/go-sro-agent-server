@@ -65,6 +65,10 @@ func (t RtNavmeshTerrain) ResolveCellAndHeight(vPos *math32.Vector3) (RtNavmeshC
 		return nil, errors.New(fmt.Sprintf("position %v not in cell", vPos))
 	}
 
+	if !t.TryFindHeight(vPos) {
+		logrus.Panicf("failed to find height vor %v in region %d", vPos, t.Region.ID)
+	}
+
 	tile := t.GetTile(int(vPos.X/TerrainWidth), int(vPos.Z/TerrainHeight))
 	return t.GetCell(tile.GetCellIndex()), nil
 }
@@ -116,10 +120,6 @@ func (t RtNavmeshTerrain) ResolvePosition(pos RtNavmeshPosition) {
 		if tile.Flag.IsBlocked() {
 			pos.Cell = nil
 		}
-	}
-
-	if pos.Instance == nil {
-
 	}
 }
 

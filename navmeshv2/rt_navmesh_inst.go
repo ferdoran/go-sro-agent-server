@@ -8,7 +8,7 @@ import (
 type RtNavmeshInst interface {
 	GetMesh() RtNavmesh
 	GetObject() RtNavmeshObj
-	GetID() uint16
+	GetID() int16
 	GetPosition() *math32.Vector3
 	GetRotation() *math32.Quaternion
 	GetScale() *math32.Vector3
@@ -19,7 +19,7 @@ type RtNavmeshInst interface {
 type RtNavmeshInstBase struct {
 	Mesh         RtNavmesh
 	Object       RtNavmeshObj
-	ID           uint16
+	ID           int16
 	Position     *math32.Vector3
 	Rotation     *math32.Quaternion
 	Scale        *math32.Vector3
@@ -50,7 +50,7 @@ func (base *RtNavmeshInstBase) GetObject() RtNavmeshObj {
 	return base.Object
 }
 
-func (base *RtNavmeshInstBase) GetID() uint16 {
+func (base *RtNavmeshInstBase) GetID() int16 {
 	return base.ID
 }
 

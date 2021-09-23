@@ -26,7 +26,7 @@ var Origin Region = NewRegionFromXAndY(OriginX, OriginY)
 
 type Region struct {
 	value uint16
-	ID    uint16
+	ID    int16
 	X     byte
 	Y     byte
 }
@@ -36,7 +36,7 @@ func NewRegionFromUint16(id uint16) Region {
 
 	return Region{
 		value: id,
-		ID:    id,
+		ID:    int16(id),
 		X:     byte(x),
 		Y:     byte(y),
 	}
@@ -47,7 +47,7 @@ func NewRegionFromInt16(id int16) Region {
 
 	return Region{
 		value: uint16(id),
-		ID:    uint16(id),
+		ID:    id,
 		X:     byte(x),
 		Y:     byte(y),
 	}
@@ -68,7 +68,7 @@ func NewRegionFromXAndY(x, y byte) Region {
 
 	return Region{
 		value: val,
-		ID:    uint16(id),
+		ID:    id,
 		X:     x,
 		Y:     y,
 	}

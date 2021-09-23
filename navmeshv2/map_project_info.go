@@ -30,7 +30,7 @@ type MapProjectInfo struct {
 	Short5             uint16
 	ActiveRegionsCount int
 	MapRegions         []byte
-	EnabledRegions     map[uint16]bool
+	EnabledRegions     map[int16]bool
 }
 
 func LoadMapProjectInfo(reader *pk2.Pk2Reader) MapProjectInfo {
@@ -65,13 +65,13 @@ func LoadMapProjectInfo(reader *pk2.Pk2Reader) MapProjectInfo {
 		Short5:             binary.LittleEndian.Uint16(short5Bytes),
 		ActiveRegionsCount: 0,
 		MapRegions:         totalRegionBytes,
-		EnabledRegions:     make(map[uint16]bool),
+		EnabledRegions:     make(map[int16]bool),
 	}
 
 	for z := 0; z < int(mapProjectInfo.MapHeight); z++ {
 		for x := 0; x < int(mapProjectInfo.MapWidth); x++ {
 			if IsEnabled(byte(x), byte(z), mapProjectInfo) {
-				regionID := binary.LittleEndian.Uint16([]byte{byte(x), byte(z)})
+				regionID := int16(binary.LittleEndian.Uint16([]byte{byte(x), byte(z)}))
 				mapProjectInfo.ActiveRegionsCount++
 				mapProjectInfo.EnabledRegions[regionID] = true
 			}

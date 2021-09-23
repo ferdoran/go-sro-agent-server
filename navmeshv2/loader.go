@@ -24,7 +24,7 @@ type Loader struct {
 	ObjectInfo     ObjectInfo
 	DungeonInfo    DungeonInfo
 	ObjectData     map[uint32]RtNavmeshObj
-	RegionData     map[uint16]RtNavmeshTerrain
+	RegionData     map[int16]RtNavmeshTerrain
 }
 
 func NewLoader(dataPk2Path string) *Loader {
@@ -39,7 +39,7 @@ func NewLoader(dataPk2Path string) *Loader {
 		ObjectInfo:     ObjectInfo{},
 		DungeonInfo:    DungeonInfo{},
 		ObjectData:     make(map[uint32]RtNavmeshObj),
-		RegionData:     make(map[uint16]RtNavmeshTerrain),
+		RegionData:     make(map[int16]RtNavmeshTerrain),
 	}
 }
 
@@ -100,7 +100,7 @@ func (l *Loader) LoadTerrainMeshes() {
 	}
 }
 
-func (l *Loader) LoadTerrainMesh(filepath string, regionId uint16) error {
+func (l *Loader) LoadTerrainMesh(filepath string, regionId int16) error {
 	fileContent, err := l.Pk2Reader.ReadFile(filepath)
 	if err != nil {
 		logrus.Panic(err)
@@ -114,7 +114,7 @@ func (l *Loader) LoadTerrainMesh(filepath string, regionId uint16) error {
 	}
 	readIndex += 12
 
-	terrain := NewRtNavmeshTerrain(filepath, NewRegionFromUint16(regionId))
+	terrain := NewRtNavmeshTerrain(filepath, NewRegionFromInt16(regionId))
 
 	// 1. Read Object Instances
 	objectInstanceCount := binary.LittleEndian.Uint16(fileContent[readIndex : readIndex+2])
@@ -351,7 +351,7 @@ func (l *Loader) loadTerrainObjectInstance(fileContent []byte, readIndex *int) R
 		RtNavmeshInstBase: RtNavmeshInstBase{
 			Mesh:   object,
 			Object: object,
-			ID:     binary.LittleEndian.Uint16(fileContent[localUidOffset:short0Offset]),
+			ID:     int16(binary.LittleEndian.Uint16(fileContent[localUidOffset:short0Offset])),
 			Position: math32.NewVector3(
 				utils.Float32FromByteArray(fileContent[positionOffset:positionOffset+4]),
 				utils.Float32FromByteArray(fileContent[positionOffset+4:positionOffset+8]),
