@@ -1,11 +1,12 @@
 package character
 
 import (
-	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/g3n/engine/math32"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -59,13 +60,17 @@ func (mh *MovementHandler) Handle() {
 			if err != nil {
 				logrus.Panic(err)
 			}
-
-			targetPos := model.Position{
-				X:       float32(x),
-				Y:       float32(y),
-				Z:       float32(z),
+			offset := math32.NewVector3(float32(x), float32(y), float32(z))
+			targetCell, err := region.ResolveCell(offset)
+			offset.Y = region.ResolveHeight(offset)
+			if err != nil {
+				logrus.Panic(err)
+			}
+			targetPos := navmeshv2.RtNavmeshPosition{
+				Offset:  offset,
 				Heading: 0,
-				Region:  region,
+				Region:  region.Region,
+				Cell:    &targetCell,
 			}
 
 			//spawnEngine := spawn.GetSpawnEngineInstance()
@@ -79,10 +84,10 @@ func (mh *MovementHandler) Handle() {
 			p.WriteUInt16(uint16(y))
 			p.WriteUInt16(uint16(z) + 0xFFFF)
 			p.WriteByte(1)
-			p.WriteUInt16(uint16(player.GetPosition().Region.ID))
-			p.WriteUInt16(uint16(player.GetPosition().X) * 10)
-			p.WriteFloat32(player.GetPosition().Y)
-			p.WriteUInt16(uint16(player.GetPosition().Z) * 10)
+			p.WriteUInt16(uint16(player.GetNavmeshPosition().Region.ID))
+			p.WriteUInt16(uint16(player.GetNavmeshPosition().Offset.X) * 10)
+			p.WriteFloat32(player.GetNavmeshPosition().Offset.Y)
+			p.WriteUInt16(uint16(player.GetNavmeshPosition().Offset.Z) * 10)
 
 			player.GetSession().Conn.Write(p.ToBytes())
 

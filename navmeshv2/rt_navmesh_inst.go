@@ -2,7 +2,6 @@ package navmeshv2
 
 import (
 	"github.com/g3n/engine/math32"
-	"github.com/sirupsen/logrus"
 )
 
 type RtNavmeshInst interface {
@@ -25,21 +24,6 @@ type RtNavmeshInstBase struct {
 	Scale        *math32.Vector3
 	LocalToWorld *math32.Matrix4
 	WorldToLocal *math32.Matrix4
-}
-
-func (base RtNavmeshInstBase) GetRtNavmeshCellTri(position *math32.Vector3) (*math32.Vector3, RtNavmeshCellTri) {
-	localPosition := position.Clone().ApplyMatrix4(base.WorldToLocal)
-	cell, err := base.Object.ResolveCellAndHeight(localPosition)
-	cellTri, ok := cell.(RtNavmeshCellTri)
-	if !ok {
-		logrus.Panicf("%v is not a RtNavmeshCellTri", cell)
-	}
-
-	if err == nil {
-		return localPosition.ApplyMatrix4(base.LocalToWorld), cellTri
-	}
-
-	return position, cellTri
 }
 
 func (base *RtNavmeshInstBase) GetMesh() RtNavmesh {

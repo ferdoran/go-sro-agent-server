@@ -1,12 +1,14 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/sirupsen/logrus"
 	"sync"
 )
 
 type NPC struct {
 	SRObject
+	navmeshv2.RtNavmeshPosition
 	Type         string
 	Mutex        *sync.Mutex
 	UniqueID     uint32

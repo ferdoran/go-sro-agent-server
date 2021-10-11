@@ -310,15 +310,15 @@ func (p *PartyService) AnswerJoinRequest(requestId, joiningPlayerJID, acceptingP
 				p1.WriteUInt32(1907)               // char model id
 				p1.WriteByte(byte(ptMaster.Level)) // level
 				p1.WriteByte(170)
-				p1.WriteUInt16(uint16(ptMaster.GetPosition().Region.ID))  // regionId
-				p1.WriteUInt16(uint16(ptMaster.GetPosition().X))          // x
-				p1.WriteUInt16(uint16(ptMaster.GetPosition().Y + 0xFFFF)) // y
-				p1.WriteUInt16(uint16(ptMaster.GetPosition().Z))          // z
-				p1.WriteUInt32(65537)                                     // unknown
-				p1.WriteUInt16(0)                                         // guild name length
-				p1.WriteByte(4)                                           // unknown
-				p1.WriteUInt32(290)                                       // primary skill tree
-				p1.WriteUInt32(0)                                         // secondary skill tree
+				p1.WriteUInt16(uint16(ptMaster.GetNavmeshPosition().Region.ID))         // regionId
+				p1.WriteUInt16(uint16(ptMaster.GetNavmeshPosition().Offset.X))          // x
+				p1.WriteUInt16(uint16(ptMaster.GetNavmeshPosition().Offset.Y + 0xFFFF)) // y
+				p1.WriteUInt16(uint16(ptMaster.GetNavmeshPosition().Offset.Z))          // z
+				p1.WriteUInt32(65537)                                                   // unknown
+				p1.WriteUInt16(0)                                                       // guild name length
+				p1.WriteByte(4)                                                         // unknown
+				p1.WriteUInt32(290)                                                     // primary skill tree
+				p1.WriteUInt32(0)                                                       // secondary skill tree
 				ptMaster.Session.Conn.Write(p1.ToBytes())
 
 				p2 := network.EmptyPacket()
@@ -327,18 +327,18 @@ func (p *PartyService) AnswerJoinRequest(requestId, joiningPlayerJID, acceptingP
 				p2.WriteByte(255) // splitter
 				p2.WriteUInt32(uint32(requestingPlayer.ID))
 				p2.WriteString(requestingPlayer.CharName)
-				p2.WriteUInt32(1907)                                              // Char model id
-				p2.WriteByte(5)                                                   // level
-				p2.WriteByte(170)                                                 // HP / MP
-				p2.WriteUInt16(uint16(requestingPlayer.GetPosition().Region.ID))  // regionId
-				p2.WriteUInt16(uint16(requestingPlayer.GetPosition().X))          // x
-				p2.WriteUInt16(uint16(requestingPlayer.GetPosition().Y + 0xFFFF)) // y
-				p2.WriteUInt16(uint16(requestingPlayer.GetPosition().Z))          // z
-				p2.WriteUInt32(65537)                                             // unknown
-				p2.WriteUInt16(0)                                                 // guild name length
-				p2.WriteByte(4)                                                   // unknown
-				p2.WriteUInt32(290)                                               // primary skill tree
-				p2.WriteUInt32(65537)                                             // secondary skill tree
+				p2.WriteUInt32(1907)                                                            // Char model id
+				p2.WriteByte(5)                                                                 // level
+				p2.WriteByte(170)                                                               // HP / MP
+				p2.WriteUInt16(uint16(requestingPlayer.GetNavmeshPosition().Region.ID))         // regionId
+				p2.WriteUInt16(uint16(requestingPlayer.GetNavmeshPosition().Offset.X))          // x
+				p2.WriteUInt16(uint16(requestingPlayer.GetNavmeshPosition().Offset.Y + 0xFFFF)) // y
+				p2.WriteUInt16(uint16(requestingPlayer.GetNavmeshPosition().Offset.Z))          // z
+				p2.WriteUInt32(65537)                                                           // unknown
+				p2.WriteUInt16(0)                                                               // guild name length
+				p2.WriteByte(4)                                                                 // unknown
+				p2.WriteUInt32(290)                                                             // primary skill tree
+				p2.WriteUInt32(65537)                                                           // secondary skill tree
 				ptMaster.Session.Conn.Write(p2.ToBytes())
 			}
 		}

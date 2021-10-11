@@ -41,7 +41,7 @@ func (gtm *GameTimeManager) moveObjects() {
 				}
 
 				// update known object list when position has changed
-				knownObjects := world.GetKnownObjectsAroundObject(obj.GetPosition().Region, obj)
+				knownObjects := world.GetKnownObjectsAroundObject(obj)
 				knownObjectsList := obj.GetKnownObjectList()
 
 				// Remove unknown objects first

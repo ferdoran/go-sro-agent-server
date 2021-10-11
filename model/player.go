@@ -201,11 +201,11 @@ func (p *Player) SendPositionUpdate() {
 	packet := network.EmptyPacket()
 	packet.MessageID = opcode.MovementPositionUpdate
 	packet.WriteUInt32(p.UniqueID)
-	packet.WriteUInt16(uint16(p.Position.Region.ID))
-	packet.WriteFloat32(p.Position.X)
-	packet.WriteFloat32(p.Position.Y)
-	packet.WriteFloat32(p.Position.Z)
-	packet.WriteUInt16(uint16(p.Position.Heading))
+	packet.WriteUInt16(uint16(p.GetNavmeshPosition().Region.ID))
+	packet.WriteFloat32(p.GetNavmeshPosition().Offset.X)
+	packet.WriteFloat32(p.GetNavmeshPosition().Offset.Y)
+	packet.WriteFloat32(p.GetNavmeshPosition().Offset.Z)
+	packet.WriteUInt16(uint16(p.GetNavmeshPosition().Heading))
 	p.Session.Conn.Write(packet.ToBytes())
 }
 
@@ -304,54 +304,6 @@ func (p *Player) GetName() string {
 func (p *Player) GetSession() *server.Session {
 	return p.Session
 }
-
-//
-//func (p *Player) MoveToPosition(newPosition Position) {
-//	// TODO implement
-//	currentTime := time.Now()
-//	movementData := &MovementData{
-//		StartTime:      currentTime,
-//		UpdateTime:     currentTime,
-//		TargetPosition: newPosition,
-//		HasDestination: true,
-//		DirectionAngle: 0,
-//	}
-//	pPos := p.GetPosition()
-//	packet := network.EmptyPacket()
-//	packet.MessageID = opcode.EntityMovementResponse
-//	packet.WriteUInt32(p.UniqueID)
-//	packet.WriteBool(movementData.HasDestination)
-//	packet.WriteUInt16(uint16(movementData.TargetPosition.Region.ID))
-//	packet.WriteUInt16(uint16(movementData.TargetPosition.X) + 0xFFFF)
-//	packet.WriteUInt16(uint16(movementData.TargetPosition.Y))
-//	packet.WriteUInt16(uint16(movementData.TargetPosition.Z) + 0xFFFF)
-//	packet.WriteByte(1)
-//	packet.WriteUInt16(uint16(pPos.Region.ID))
-//	packet.WriteUInt16(uint16(pPos.X) * 10)
-//	packet.WriteFloat32(pPos.Y)
-//	packet.WriteUInt16(uint16(pPos.Z) * 10)
-//
-//	p.MovementData = movementData
-//	p.SetMotionState(Running) // TODO check if walking or sitting
-//	service.GetWorldServiceInstance().RegisterMovingCharacter(p)
-//	// Broadcast movement Update to known objects around
-//
-//	p.Broadcast(&packet)
-//}
-//
-//func (p *Player) WalkToDirection(heading float32) {
-//	currentTime := time.Now()
-//	movementData := &MovementData{
-//		StartTime:      currentTime,
-//		UpdateTime:     currentTime,
-//		HasDestination: false,
-//		DirectionAngle: heading,
-//	}
-//
-//	p.MovementData = movementData
-//	p.SetMotionState(Running) // TODO check if walking or sitting
-//	service.GetWorldServiceInstance().RegisterMovingCharacter(p)
-//}
 
 func (p *Player) Broadcast(packet *network.Packet) {
 	packetBuffer := packet.ToBytes()

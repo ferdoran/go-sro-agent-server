@@ -2,11 +2,12 @@ package chat
 
 import (
 	"fmt"
-	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
+	"github.com/g3n/engine/math32"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"regexp"
@@ -94,7 +95,7 @@ func (h *GmMessageHandler) HandleAdminMessage(request MessageRequest, session *s
 			p.MessageID = opcode.ChatUpdate
 			p.WriteByte(PM)
 			p.WriteString("System")
-			p.WriteString(fmt.Sprintf("Current Position: ( %f | %f | %f )", player.Position.X, player.Position.Y, player.Position.Z))
+			p.WriteString(fmt.Sprintf("Current Position: ( %f | %f | %f )", player.GetNavmeshPosition().Offset.X, player.GetNavmeshPosition().Offset.Y, player.GetNavmeshPosition().Offset.Z))
 			player.Session.Conn.Write(p.ToBytes())
 		case JanganWest:
 			warpPlayer(
@@ -148,14 +149,19 @@ func warpPlayer(playerUniqueId uint32, x, y, z float32, regionId int16) {
 	if err != nil {
 		logrus.Panic(err)
 	}
-	newPosition := model.Position{
-		X:       x,
-		Y:       y,
-		Z:       z,
+	offset := math32.NewVector3(x, y, z)
+	cell, err := region.ResolveCell(offset)
+	offset.Y = region.ResolveHeight(offset)
+	if err != nil {
+		logrus.Panic(err)
+	}
+	newPosition := navmeshv2.RtNavmeshPosition{
+		Offset:  offset,
 		Heading: 0,
-		Region:  region,
+		Region:  region.Region,
+		Cell:    &cell,
 	}
 	player.StopMovement()
-	player.SetPosition(newPosition)
+	player.SetNavmeshPosition(newPosition)
 	player.SendPositionUpdate()
 }

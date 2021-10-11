@@ -66,7 +66,12 @@ func (r Rectangle) IntersectsTriangle(triangle Triangle) bool {
 	recV3 := math32.NewVector3(r.Max.X, 0, r.Min.Y)
 	recV4 := math32.NewVector3(r.Max.X, 0, r.Max.Y)
 
-	if triangle.FindHeight(recV1) || triangle.FindHeight(recV2) || triangle.FindHeight(recV3) || triangle.FindHeight(recV4) {
+	h1, _ := triangle.FindHeight(recV1)
+	h2, _ := triangle.FindHeight(recV2)
+	h3, _ := triangle.FindHeight(recV3)
+	h4, _ := triangle.FindHeight(recV4)
+
+	if h1 || h2 || h3 || h4 {
 		return true
 	}
 

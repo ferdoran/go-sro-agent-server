@@ -34,7 +34,7 @@ func (s *SpawnManager) updateSpawns() {
 		select {
 		case <-s.ticker.C:
 			for _, region := range world.GetRegions() {
-				for _, object := range region.GetVisibleObjects() {
+				for _, object := range world.GetVisibleObjectsForRegion(region.Region.ID) {
 
 					if player, isPlayer := object.(model.IPlayer); isPlayer {
 						objectsToDespawn := player.GetCharKnownObjectList().GetObjectsToDespawn()

@@ -1,13 +1,19 @@
 package model
 
-import "sync"
+import (
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
+	"github.com/sirupsen/logrus"
+	"sync"
+)
 
 type ISRObject interface {
 	GetType() string
 	GetTypeInfo() TypeInfo
 	SetTypeInfo(info TypeInfo)
 	SetPosition(pos Position)
+	SetNavmeshPosition(pos navmeshv2.RtNavmeshPosition)
 	GetPosition() Position
+	GetNavmeshPosition() navmeshv2.RtNavmeshPosition
 	GetUniqueID() uint32
 	SetUniqueID(uniqueId uint32)
 	GetRefObjectID() uint32
@@ -17,6 +23,7 @@ type ISRObject interface {
 }
 
 type SRObject struct {
+	navmeshv2.RtNavmeshPosition
 	Position
 	TypeInfo
 	MovementData    *MovementData
@@ -36,6 +43,20 @@ func (o *SRObject) GetPosition() (position Position) {
 	o.RWMutex.RLock()
 	defer o.RWMutex.RUnlock()
 	position = o.Position
+	return
+}
+
+func (o *SRObject) SetNavmeshPosition(newPosition navmeshv2.RtNavmeshPosition) {
+	o.RWMutex.Lock()
+	defer o.RWMutex.Unlock()
+	logrus.Debugf("Setting position to %s", newPosition.String())
+	o.RtNavmeshPosition = newPosition
+}
+
+func (o *SRObject) GetNavmeshPosition() (position navmeshv2.RtNavmeshPosition) {
+	o.RWMutex.RLock()
+	defer o.RWMutex.RUnlock()
+	position = o.RtNavmeshPosition
 	return
 }
 

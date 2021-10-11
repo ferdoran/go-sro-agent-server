@@ -8,7 +8,8 @@
 An agent server implementation of the game Silkroad Online ,
 based on [go-sro-framework](https://github.com/ferdoran/go-sro-framework) 
 and [go-sro-fileutils](https://github.com/ferdoran/go-sro-fileutils),
-written in Golang.
+written in Golang. Also [raylib-go](https://github.com/gen2brain/raylib-go)
+is being used for the navmesh viewer in `cmd/navmesh-viewer/`
 
 It was developed using vSRO 1.88 files.
 Using different versions might result in errors and bugs.

@@ -1,10 +1,13 @@
 package model
 
-import "github.com/ferdoran/go-sro-framework/db"
+import (
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
+	"github.com/ferdoran/go-sro-framework/db"
+)
 
 type Spawn struct {
 	NestID         int
-	Position       Position
+	Position       navmeshv2.RtNavmeshPosition
 	RefObjID       uint64
 	NpcCodeName    string
 	Radius         int

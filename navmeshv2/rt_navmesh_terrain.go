@@ -1,10 +1,7 @@
 package navmeshv2
 
 import (
-	"fmt"
 	"github.com/g3n/engine/math32"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -57,70 +54,7 @@ func NewRtNavmeshTerrain(filename string, region Region) RtNavmeshTerrain {
 }
 
 func (t RtNavmeshTerrain) GetCell(index int) RtNavmeshCell {
-	return t.Cells[index]
-}
-
-func (t RtNavmeshTerrain) ResolveCellAndHeight(vPos *math32.Vector3) (RtNavmeshCell, error) {
-	if vPos.X < 0 || vPos.X >= TerrainWidth || vPos.Z < 0 || vPos.Z >= TerrainHeight {
-		return nil, errors.New(fmt.Sprintf("position %v not in cell", vPos))
-	}
-
-	if !t.TryFindHeight(vPos) {
-		logrus.Panicf("failed to find height vor %v in region %d", vPos, t.Region.ID)
-	}
-
-	tile := t.GetTile(int(vPos.X/TerrainWidth), int(vPos.Z/TerrainHeight))
-	return t.GetCell(tile.GetCellIndex()), nil
-}
-
-func (t RtNavmeshTerrain) ResolvePosition(pos RtNavmeshPosition) {
-	inputHeight := pos.Offset.Y
-	vTerrainTest := pos.Offset.Clone()
-	vObjectTest := pos.Offset.Clone()
-
-	cell, err := t.ResolveCellAndHeight(vTerrainTest)
-	if err != nil {
-		logrus.Panic(err)
-	}
-	quad, ok := cell.(RtNavmeshCellQuad)
-	if !ok {
-		return
-	}
-
-	pos.Cell = quad
-	pos.Instance = nil
-
-	deltaTerrain := vTerrainTest.Y - inputHeight
-	deltaTerrainAbs := math32.Abs(deltaTerrain)
-
-	for _, inst := range quad.Objects {
-		vObjectTestNew, tri := inst.GetRtNavmeshCellTri(vObjectTest)
-		if vObjectTestNew.Equals(vObjectTest) {
-			continue
-		}
-		vObjectTest = vObjectTestNew
-
-		deltaObj := vObjectTest.Y - inputHeight
-		deltaObjAbs := math32.Abs(deltaObj)
-
-		if deltaObjAbs < deltaTerrainAbs {
-			deltaTerrain = deltaObj
-			pos.Cell = tri
-			pos.Instance = &inst
-		}
-	}
-
-	if pos.Instance == nil {
-		pos.Offset = vTerrainTest
-		pos.Offset.Y = deltaTerrain + inputHeight
-
-		tileX := int(pos.Offset.X / TileWidth)
-		tileZ := int(pos.Offset.Z / TileWidth)
-		tile := t.GetTile(tileX, tileZ)
-		if tile.Flag.IsBlocked() {
-			pos.Cell = nil
-		}
-	}
+	return &t.Cells[index]
 }
 
 func (t RtNavmeshTerrain) GetTile(x, y int) RtNavmeshTile {
@@ -135,27 +69,35 @@ func (t RtNavmeshTerrain) GetPlane(xBlock, zBlock int) RtNavmeshPlane {
 	return t.planeMap[zBlock*BlocksY+xBlock]
 }
 
-func (t RtNavmeshTerrain) TryFindHeight(vPos *math32.Vector3) bool {
-	if vPos.X < 0 || vPos.X >= TerrainWidth || vPos.Z < 0 || vPos.Z >= TerrainHeight {
-		return false
-	}
+func (t RtNavmeshTerrain) ResolveCell(pos *math32.Vector3) (RtNavmeshCellQuad, error) {
+	tile := t.GetTile(int(pos.X/TileWidth), int(pos.Z/TileHeight))
+	return t.Cells[tile.CellIndex], nil
+}
 
-	tileX := int(vPos.X / TerrainWidth)
-	tileZ := int(vPos.Z / TerrainHeight)
-	offsetX := (vPos.X - (float32(tileX) * TerrainWidth)) / TerrainWidth
-	offsetZ := (vPos.Z - (float32(tileZ) * TerrainHeight)) / TerrainHeight
+func (t RtNavmeshTerrain) ResolveHeight(pos *math32.Vector3) float32 {
+	tileX := int(pos.X / TileWidth)
+	tileZ := int(pos.Z / TileHeight)
 
-	// https://en.wikipedia.org/wiki/Bilinear_interpolation
-	y1 := (1.0 - offsetX) * (((1.0 - offsetZ) * t.GetHeight(tileX+0, tileZ+0)) + (offsetZ * t.GetHeight(tileX+0, tileZ+1)))
-	y2 := offsetX * (((1.0 - offsetZ) * t.GetHeight(tileX+1, tileZ+0)) + (offsetZ * t.GetHeight(tileX+1, tileZ+1)))
-	vPos.Y = y1 + y2
+	h1 := t.GetHeight(tileX, tileZ)
+	h2 := t.GetHeight(tileX, tileZ+1)
+	h3 := t.GetHeight(tileX+1, tileZ)
+	h4 := t.GetHeight(tileX+1, tileZ+1)
 
-	xBlock := tileX / (PlaneWidth / TileWidth)
-	zBlock := tileZ / (PlaneHeight / TileHeight)
-	plane := t.GetPlane(xBlock, zBlock)
-	if plane.SurfaceType.IsIce() {
-		vPos.Y = math32.Max(vPos.Y, plane.Height)
-	}
+	// h1--------h3
+	// |   |      |
+	// |   |      |
+	// h5--+------h6
+	// |   |      |
+	// h2--------h4
 
-	return true
+	tileOffsetX := pos.X - (TileWidth * float32(tileX))
+	tileOffsetXLength := tileOffsetX / TileWidth
+	tileOffsetZ := pos.Z - (TileHeight * float32(tileZ))
+	tileOffsetZLength := tileOffsetZ / TileHeight
+
+	h5 := h1 + (h2-h1)*tileOffsetZLength
+	h6 := h3 + (h4-h3)*tileOffsetZLength
+	yHeight := h5 + (h6-h5)*tileOffsetXLength
+
+	return yHeight
 }

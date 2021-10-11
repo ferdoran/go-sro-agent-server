@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/sirupsen/logrus"
@@ -48,7 +49,7 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 			// NPC_FORTRESS_STRUCT
 		}
 		p.WriteUInt32(object.GetUniqueID())
-		WritePosition(p, object.GetPosition())
+		WritePosition(p, object.GetNavmeshPosition())
 
 		// TODO WriteMovementData
 		if movementData := object.GetMovementData(); movementData != nil {
@@ -58,9 +59,9 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 			if movementData.HasDestination {
 				p.WriteUInt16(uint16(movementData.TargetPosition.Region.ID))
 				if movementData.TargetPosition.Region.ID > 0 {
-					p.WriteUInt16(uint16(movementData.TargetPosition.X))
-					p.WriteUInt16(uint16(movementData.TargetPosition.Y))
-					p.WriteUInt16(uint16(movementData.TargetPosition.Z))
+					p.WriteUInt16(uint16(movementData.TargetPosition.Offset.X))
+					p.WriteUInt16(uint16(movementData.TargetPosition.Offset.Y))
+					p.WriteUInt16(uint16(movementData.TargetPosition.Offset.Z))
 				} else {
 					// TODO Dungeon
 				}
@@ -72,7 +73,7 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 			p.WriteByte(0)
 			p.WriteByte(1)
 			p.WriteByte(1)
-			p.WriteUInt16(uint16(object.GetPosition().Heading))
+			p.WriteUInt16(uint16(object.GetNavmeshPosition().Heading))
 		}
 		character := object.(ICharacter)
 
@@ -207,7 +208,7 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 		}
 
 		p.WriteUInt32(object.GetUniqueID())
-		WritePosition(p, object.GetPosition())
+		WritePosition(p, object.GetNavmeshPosition())
 
 		if ownerJID := item.GetOwner(); ownerJID > 0 {
 			p.WriteUInt32(item.GetOwner())
@@ -215,7 +216,7 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 		p.WriteByte(item.GetRarity())
 	} else if typeInfo.IsStructure() {
 		p.WriteUInt32(object.GetUniqueID())
-		WritePosition(p, object.GetPosition())
+		WritePosition(p, object.GetNavmeshPosition())
 
 		p.WriteByte(0) // TODO unkByte0
 		p.WriteByte(0) // TODO unkByte1
@@ -239,7 +240,7 @@ func WriteEntitySpawnData(p *network.Packet, object ISRObject) {
 		p.WriteUInt16(0) // TODO unkUint160
 		p.WriteUInt32(0) // TODO RefSkillID
 		p.WriteUInt32(object.GetUniqueID())
-		WritePosition(p, object.GetPosition())
+		WritePosition(p, object.GetNavmeshPosition())
 	}
 
 	if p.MessageID == opcode.EntitySingleSpawn {
@@ -277,13 +278,13 @@ func WriteEntitySpawn(p *network.Packet, player *Player) {
 
 	p.WriteByte(0) // HasMask
 	p.WriteUInt32(player.UniqueID)
-	WritePosition(p, player.Position)
+	WritePosition(p, player.GetNavmeshPosition())
 
 	// TODO movement still does not save a target location
-	p.WriteByte(0)                                 // Movement.HasDestination
-	p.WriteByte(1)                                 // Movement.Type
-	p.WriteByte(1)                                 // Movement Source | 0 - Spinning | 1 - Skywalking
-	p.WriteUInt16(uint16(player.Position.Heading)) // Angle
+	p.WriteByte(0)                                             // Movement.HasDestination
+	p.WriteByte(1)                                             // Movement.Type
+	p.WriteByte(1)                                             // Movement Source | 0 - Spinning | 1 - Skywalking
+	p.WriteUInt16(uint16(player.GetNavmeshPosition().Heading)) // Angle
 
 	p.WriteByte(byte(player.LifeState))
 	p.WriteByte(0) // unknown
@@ -319,11 +320,11 @@ func WriteEntitySpawn(p *network.Packet, player *Player) {
 	}
 }
 
-func WritePosition(p *network.Packet, position Position) {
+func WritePosition(p *network.Packet, position navmeshv2.RtNavmeshPosition) {
 	p.WriteUInt16(uint16(position.Region.ID))
-	p.WriteFloat32(position.X)
-	p.WriteFloat32(position.Y)
-	p.WriteFloat32(position.Z)
+	p.WriteFloat32(position.Offset.X)
+	p.WriteFloat32(position.Offset.Y)
+	p.WriteFloat32(position.Offset.Z)
 	p.WriteUInt16(uint16(position.Heading))
 }
 

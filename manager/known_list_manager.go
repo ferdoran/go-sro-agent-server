@@ -37,8 +37,8 @@ func (k *KnownListManager) updateKnownLists() {
 		select {
 		case <-k.ticker.C:
 			for _, region := range world.GetRegions() {
-				for _, object := range region.GetVisibleObjects() {
-					knownObjects := world.GetKnownObjectsAroundObject(region, object)
+				for _, object := range world.GetVisibleObjectsForRegion(region.Region.ID) {
+					knownObjects := world.GetKnownObjectsAroundObject(object)
 					knownObjectsList := object.GetKnownObjectList()
 
 					// Remove unknown objects first

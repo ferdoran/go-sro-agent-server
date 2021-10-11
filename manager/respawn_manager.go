@@ -3,7 +3,9 @@ package manager
 import (
 	"fmt"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-agent-server/service"
+	"github.com/g3n/engine/math32"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"math/rand"
@@ -35,7 +37,7 @@ func (s *RespawnManager) respawn() {
 		select {
 		case <-s.ticker.C:
 			for _, region := range world.GetRegions() {
-				for _, s := range region.Spawns {
+				for _, s := range world.GetSpawnsForRegion(region.Region.ID) {
 					//spawnArea.Respawn()
 					//for deadNpc := range s.NPCDied {
 					//	if _, ok := s.NPCs[deadNpc]; ok {
@@ -44,7 +46,7 @@ func (s *RespawnManager) respawn() {
 					//		s.respawnTimes = append(s.respawnTimes, respawnTime)
 					//	}
 					//}
-					logrus.Tracef("respawning %s on position R[%d] (%f|%f|%f)", s.NpcCodeName, s.Position.Region.ID, s.Position.X, s.Position.Y, s.Position.Z)
+					logrus.Tracef("respawning %s on position R[%d] (%f|%f|%f)", s.NpcCodeName, s.Position.Region.ID, s.Position.Offset.X, s.Position.Offset.Y, s.Position.Offset.Z)
 					currentTime := time.Now()
 					//if len(s.respawnTimes) > 0 && len(s.NPCs) < s.MaxTotalCount {
 					for i, respawnTime := range s.RespawnTimes {
@@ -66,7 +68,7 @@ func spawnNpc(s *model.SpawnArea) {
 		Type:  "NPC",
 		Mutex: &sync.Mutex{},
 	}
-	npc.Position = generateRandomPositionInRadius(s, 0)
+	npc.RtNavmeshPosition = generateRandomPositionInRadius(s, 0)
 	npc.KnownObjectList = model.NewKnownObjectList(npc)
 	npc.Name = s.NpcCodeName
 	npc.RefObjectID = uint32(s.RefObjID)
@@ -80,8 +82,10 @@ func spawnNpc(s *model.SpawnArea) {
 	s.NPCs[npc.GetUniqueID()] = npc
 }
 
-func generateRandomPositionInRadius(s *model.SpawnArea, retryCount int) model.Position {
-	xWorld, _, zWorld := s.Position.ToWorldCoordinatesInt32()
+func generateRandomPositionInRadius(s *model.SpawnArea, retryCount int) navmeshv2.RtNavmeshPosition {
+	vWorld := s.Position.GetGlobalCoordinates()
+	xWorld := int32(vWorld.X)
+	zWorld := int32(vWorld.Z)
 
 	var spawnXWorld, spawnZWorld int32
 
@@ -109,12 +113,12 @@ func generateRandomPositionInRadius(s *model.SpawnArea, retryCount int) model.Po
 		spawnZWorld = zWorld
 	}
 
-	newPos, err := service.GetWorldServiceInstance().NewPosFromWorldCoordinates(float32(spawnXWorld), float32(spawnZWorld))
-	newPos.Y = s.Position.Y
+	newPos, err := service.GetWorldServiceInstance().NewPosFromGlobalCoordinates(math32.NewVector3(float32(spawnXWorld), 0, float32(spawnZWorld)))
 	if err != nil {
 		logrus.Warn(errors.Wrap(err, fmt.Sprintf("failed to generate random position (%d times), for mob spawn near %s", retryCount, s.Position.String())))
 		return generateRandomPositionInRadius(s, retryCount+1)
 	}
+	newPos.Offset.Y = s.Position.Offset.Y
 
 	return newPos
 }

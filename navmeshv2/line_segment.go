@@ -51,3 +51,24 @@ func (ls LineSegment) Intersects(other LineSegment) (bool, *math32.Vector2) {
 
 	return false, math32.NewVec2()
 }
+
+func (ls LineSegment) Intersects3D(other LineSegment) (bool, *math32.Vector3) {
+
+	denominator := ((other.B.Z - other.A.Z) * (ls.B.X - ls.A.X)) - ((other.B.X - other.A.X) * (ls.B.Z - ls.A.Z))
+
+	if denominator != 0 {
+		uA := (((other.B.X - other.A.X) * (ls.A.Z - other.A.Z)) - ((other.B.Z - other.A.Z) * (ls.A.X - other.A.X))) / denominator
+		uB := (((ls.B.X - ls.A.X) * (ls.A.Z - other.A.Z)) - ((ls.B.Z - ls.A.Z) * (ls.A.X - other.A.X))) / denominator
+
+		//if (uA > 0f && uA < 1f && uB > 0f && uB < 1f) // exclusive caps
+		if uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1 { // inclusive caps
+			a := ls.A.Clone()
+			b := ls.B.Clone()
+			result := a.Add(b.Sub(a.Clone()).MultiplyScalar(uA))
+
+			return true, math32.NewVector3(result.X, result.Y, result.Z)
+		}
+	}
+
+	return false, math32.NewVec3()
+}

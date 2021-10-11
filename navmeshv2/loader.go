@@ -83,7 +83,7 @@ func (l *Loader) LoadObjectMesh(objectIndex uint32) RtNavmeshObj {
 	return l.ObjectData[objectIndex]
 }
 
-func (l *Loader) LoadTerrainMeshes() {
+func (l *Loader) LoadTerrainMeshes(progress chan int) {
 	counter := 0
 	for regionId, enabled := range l.MapProjectInfo.EnabledRegions {
 		if !enabled {
@@ -92,6 +92,9 @@ func (l *Loader) LoadTerrainMeshes() {
 		regionShortHex := fmt.Sprintf("%x", regionId)
 		navMeshHex := fmt.Sprintf("nv_%s.nvm", regionShortHex)
 		counter++
+		if progress != nil {
+			progress <- counter
+		}
 		fmt.Printf("\rReading %s. Finished [%d / %d] files", navMeshHex, counter, l.MapProjectInfo.ActiveRegionsCount)
 		err := l.LoadTerrainMesh(l.NavMeshPath+string(os.PathSeparator)+navMeshHex, regionId)
 		if err != nil {
@@ -320,7 +323,7 @@ func (l *Loader) loadTerrainNavigationCell(content []byte, readIndex *int, index
 			},
 		},
 		Objects: make([]RtNavmeshInstObj, content[objCountOffset]),
-		edges:   make([]RtNavmeshEdge, 0),
+		Edges:   make([]RtNavmeshEdge, 0),
 	}
 
 	// Object instances

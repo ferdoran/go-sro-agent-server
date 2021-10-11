@@ -3,11 +3,13 @@ package lobby
 import (
 	"github.com/ferdoran/go-sro-agent-server/engine/environment"
 	"github.com/ferdoran/go-sro-agent-server/model"
+	"github.com/ferdoran/go-sro-agent-server/navmeshv2"
 	"github.com/ferdoran/go-sro-agent-server/service"
 	"github.com/ferdoran/go-sro-framework/network"
 	"github.com/ferdoran/go-sro-framework/network/opcode"
 	"github.com/ferdoran/go-sro-framework/server"
 	"github.com/ferdoran/go-sro-framework/utils"
+	"github.com/g3n/engine/math32"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sync"
@@ -123,12 +125,12 @@ func (h *CharSelectionJoinRequestHandler) Handle() {
 
 		pDataBody.WriteUInt32(player.GetUniqueID()) // UniqueID
 		// 8. Position
-		model.WritePosition(&pDataBody, player.GetPosition())
+		model.WritePosition(&pDataBody, player.GetNavmeshPosition())
 		// 9. Movement
-		pDataBody.WriteByte(0)                                 // HasDestination
-		pDataBody.WriteByte(1)                                 // Type
-		pDataBody.WriteByte(0)                                 // Source
-		pDataBody.WriteUInt16(uint16(player.Position.Heading)) // Angle
+		pDataBody.WriteByte(0)                                             // HasDestination
+		pDataBody.WriteByte(1)                                             // Type
+		pDataBody.WriteByte(0)                                             // Source
+		pDataBody.WriteUInt16(uint16(player.GetNavmeshPosition().Heading)) // Angle
 		// 10. State
 		pDataBody.WriteByte(byte(model.Spawning))     // LifeState
 		pDataBody.WriteByte(0)                        // unkByte
@@ -256,12 +258,17 @@ func (h *CharSelectionJoinRequestHandler) LoadPlayerData(charName string, sessio
 	if err != nil {
 		log.Panic(err)
 	}
-	player.Position = model.Position{
-		X:       char.PosX,
-		Y:       char.PosY,
-		Z:       char.PosZ,
+	offset := math32.NewVector3(char.PosX, char.PosY, char.PosZ)
+	cell, err := region.ResolveCell(offset)
+	offset.Y = region.ResolveHeight(offset)
+	if err != nil {
+		log.Panic(err)
+	}
+	player.RtNavmeshPosition = navmeshv2.RtNavmeshPosition{
+		Offset:  offset,
 		Heading: float32(angle),
-		Region:  region,
+		Region:  region.Region,
+		Cell:    &cell,
 	}
 	player.Name = player.CharName
 	player.TypeInfo = model.RefChars[player.GetRefObjectID()].TypeInfo
