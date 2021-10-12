@@ -4,11 +4,27 @@ import (
 	"github.com/g3n/engine/math32"
 )
 
+const (
+	CollisionTerrain = iota
+	CollisionObject
+)
+
+type CollisionFlag byte
+
+func (f CollisionFlag) IsTerrain() bool {
+	return f == CollisionTerrain
+}
+
+func (f CollisionFlag) IsObject() bool {
+	return f == CollisionObject
+}
+
 type Collision struct {
 	VectorLocal  *math32.Vector3
 	VectorGlobal *math32.Vector3
 	ContactEdge  RtNavmeshEdge
 	Region
+	Flag CollisionFlag
 }
 
 func FindTerrainCollisions(currentPosition, nextPosition RtNavmeshPosition,

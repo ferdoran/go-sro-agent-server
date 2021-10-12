@@ -88,6 +88,8 @@ func drawToolbar() {
 		loader = navmeshv2.NewLoader("E:\\Silkroad_TestIn3\\Data.pk2")
 		loader.LoadNavMeshInfos()
 		loader.LoadTerrainMesh(loader.NavMeshPath+string(os.PathSeparator)+"nv_6587.nvm", 25991)
+		loader.LoadTerrainMesh(loader.NavMeshPath+string(os.PathSeparator)+"nv_6687.nvm", 26246)
+		loader.LoadTerrainMesh(loader.NavMeshPath+string(os.PathSeparator)+"nv_61a5.nvm", 24997)
 		////loaderProgressChannel <- loader.MapProjectInfo.ActiveRegionsCount
 		////loaderProgressAbsolute = loader.MapProjectInfo.ActiveRegionsCount
 		loaderProgress = 1.0

@@ -78,10 +78,26 @@ func (t RtNavmeshTerrain) ResolveHeight(pos *math32.Vector3) float32 {
 	tileX := int(pos.X / TileWidth)
 	tileZ := int(pos.Z / TileHeight)
 
+	if tileX < 0 {
+		tileX = 0
+	}
+	if tileZ < 0 {
+		tileZ = 0
+	}
+
+	tileX1 := tileX + 1
+	tileZ1 := tileZ + 1
+	if tileX1 >= tileX {
+		tileX1 = tileX
+	}
+	if tileZ1 >= tileZ {
+		tileZ1 = tileZ
+	}
+
 	h1 := t.GetHeight(tileX, tileZ)
-	h2 := t.GetHeight(tileX, tileZ+1)
-	h3 := t.GetHeight(tileX+1, tileZ)
-	h4 := t.GetHeight(tileX+1, tileZ+1)
+	h2 := t.GetHeight(tileX, tileZ1)
+	h3 := t.GetHeight(tileX1, tileZ)
+	h4 := t.GetHeight(tileX1, tileZ1)
 
 	// h1--------h3
 	// |   |      |

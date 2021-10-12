@@ -31,6 +31,8 @@ func drawTerrain() {
 			}
 
 			for _, edge := range terrain.GlobalEdges {
+				edge.Line.A.Y = terrain.ResolveHeight(edge.Line.A)
+				edge.Line.B.Y = terrain.ResolveHeight(edge.Line.B)
 				startPos := rl.NewVector3(edge.Line.A.X, edge.Line.A.Y, edge.Line.A.Z)
 				endPos := rl.NewVector3(edge.Line.B.X, edge.Line.B.Y, edge.Line.B.Z)
 
@@ -40,6 +42,8 @@ func drawTerrain() {
 			}
 
 			for _, edge := range terrain.InternalEdges {
+				edge.Line.A.Y = terrain.ResolveHeight(edge.Line.A)
+				edge.Line.B.Y = terrain.ResolveHeight(edge.Line.B)
 				startPos := rl.NewVector3(edge.Line.A.X, edge.Line.A.Y, edge.Line.A.Z)
 				endPos := rl.NewVector3(edge.Line.B.X, edge.Line.B.Y, edge.Line.B.Z)
 
